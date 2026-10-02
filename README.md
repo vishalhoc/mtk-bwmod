@@ -1,6 +1,6 @@
 # MTK Extreme Bandwidth Mod
 
-> **v2.0** — Universal Magisk module for **all MediaTek devices**  
+> **v3.0** — Universal Magisk module for **all MediaTek devices**  
 > Helio G / P / X · Dimensity · MT6xxx · MT8xxx  
 > **Original Module by Elvan · Web Control Panel & Custom Tuner by hoc**
 
@@ -9,7 +9,7 @@ Now featuring an **interactive Web Control Panel**, real-time telemetry, 4 tuned
 
 ---
 
-## ⚡ Web Control Panel (v2.0)
+## ⚡ Web Control Panel (v3.0)
 
 Access the live control panel directly on your device:
 - **Web URL**: `http://localhost:8096` or `http://127.0.0.1:8096`

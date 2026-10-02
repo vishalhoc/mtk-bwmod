@@ -1,6 +1,6 @@
 # MTK Extreme Bandwidth Mod Changelog
 
-## v2.0 - Web Control Panel, Live Telemetry & Full Parameter Tuner
+## v3.0 - Web Control Panel, Live Telemetry & Full Parameter Tuner
 - **Interactive Web Control Panel**:
   - Embedded BusyBox `httpd` daemon on port `8096` (`http://localhost:8096`).
   - Dark cyberpunk UI with real-time hardware ticker (SoC, Device, Active Profile, TCP CC, Conntrack, Uptime).

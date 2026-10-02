@@ -1,7 +1,7 @@
 id=mtk_bwmod
 name=MTK Extreme Bandwidth Mod
-version=v2.0
-versionCode=200
+version=v3.0
+versionCode=300
 author=Elvan (WebUI & Control Panel by hoc)
 description=Universal network optimization for all MediaTek (Helio/Dimensity). WiFi · LTE · NR/5G · TCP/BBR · VoLTE · Interactive Web Control Panel · Profile Switcher · Full Telemetry & Custom Tuner.
 actionTitle=Open BWMod Control Panel
