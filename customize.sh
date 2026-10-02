@@ -63,31 +63,36 @@ ui_print "  ✓  MediaTek confirmed"
 ui_print "     $MTK_REASON"
 ui_print ""
 
-unzip -o "$ZIPFILE" 'system.prop' -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" 'module.prop' -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" 'service.sh' -d "$MODPATH" >&2
-unzip -o "$ZIPFILE" 'action.sh'  -d "$MODPATH" >&2  -d "$MODPATH" >&2
+unzip -o "$ZIPFILE" -x 'META-INF/*' -d "$MODPATH" >&2
 
-set_perm_recursive "$MODPATH"       root root 0755 0644
-set_perm "$MODPATH/service.sh"      root root 0755
-set_perm "$MODPATH/system/etc/init/mtk-bwmod.rc"                 root root 0644
-set_perm "$MODPATH/system/etc/sysctl.d/99-mtk-bwmod.conf"        root root 0644
-set_perm "$MODPATH/action.sh"       root root 0755
+set_perm_recursive "$MODPATH" root root 0755 0644
+set_perm "$MODPATH/service.sh" root root 0755
+set_perm "$MODPATH/post-fs-data.sh" root root 0755
+set_perm "$MODPATH/action.sh" root root 0755
+set_perm_recursive "$MODPATH/web" root root 0755 0644
+set_perm "$MODPATH/web/cgi-bin/api.sh" root root 0755
+[ -f "$MODPATH/system/etc/init/mtk-bwmod.rc" ] && set_perm "$MODPATH/system/etc/init/mtk-bwmod.rc" root root 0644
+[ -f "$MODPATH/system/etc/sysctl.d/99-mtk-bwmod.conf" ] && set_perm "$MODPATH/system/etc/sysctl.d/99-mtk-bwmod.conf" root root 0644
+
+# Setup initial profile
+[ ! -f /data/local/tmp/mtk_bwmod_profile ] && echo "performance" > /data/local/tmp/mtk_bwmod_profile
+
+# Pre-deploy web UI
+mkdir -p /data/local/mtk_bwmod/web 2>/dev/null
+cp -rf "$MODPATH/web/"* /data/local/mtk_bwmod/web/ 2>/dev/null
+chmod -R 0755 /data/local/mtk_bwmod/web 2>/dev/null
+chmod 0755 /data/local/mtk_bwmod/web/cgi-bin/api.sh 2>/dev/null
 
 PROP_COUNT=$(grep -c "=" "$MODPATH/system.prop" 2>/dev/null || echo 0)
 ui_print "  ✓  system.prop  ($PROP_COUNT props, 27 sections)"
-ui_print "  ✓  service.sh   (22 sections, runs on boot)"
+ui_print "  ✓  post-fs-data (early kernel socket & net tuning)"
+ui_print "  ✓  service.sh   (boot service & profile restore)"
+ui_print "  ✓  web/         (Web Control Panel on port 8096)"
+ui_print "  ✓  action.sh    (Action Button & Profile Switcher)"
 ui_print ""
-ui_print "  System file overlay:"
-ui_print "   system/etc/init/mtk-bwmod.rc    (Android init, pre-Magisk)"
-ui_print "   system/etc/sysctl.d/99-mtk-bwmod.conf (sysctl fallback)"
-ui_print "  ✓  action.sh    (Profile Switcher — in Magisk App)"
-ui_print ""
-ui_print "  Boot service:"
-ui_print "   Radio · IMS · TCP/BBR · UDP/QUIC"
-ui_print "   WiFi · DNS · IRQ affinity"
-ui_print "   Data stall · txqueuelen · RPS"
-ui_print "   Settings UI network features unlock"
+ui_print "  Control Panel:"
+ui_print "   http://localhost:8096"
+ui_print "   Tap 'Action' button in Magisk to open instantly"
 ui_print ""
 ui_print "  Log: /data/local/tmp/mtk_bwmod.log"
 ui_print ""

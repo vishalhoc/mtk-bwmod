@@ -1,12 +1,46 @@
 # MTK Extreme Bandwidth Mod
 
-> **v1.0** — Universal Magisk module for **all MediaTek devices**  
-> Helio G / P / X · Dimensity · MT6xxx · MT8xxx
+> **v2.0** — Universal Magisk module for **all MediaTek devices**  
+> Helio G / P / X · Dimensity · MT6xxx · MT8xxx  
+> **Original Module by Elvan · Web Control Panel & Custom Tuner by hoc**
 
 Pure network optimization — WiFi, LTE, NR/5G, TCP, VoLTE, data connectivity.  
-No GPU/audio/memory tweaks. Network only.
+Now featuring an **interactive Web Control Panel**, real-time telemetry, 4 tuned profile modes, and deep kernel options editor!
 
 ---
+
+## ⚡ Web Control Panel (v2.0)
+
+Access the live control panel directly on your device:
+- **Web URL**: `http://localhost:8096` or `http://127.0.0.1:8096`
+- **Magisk App**: Tap the **Action** button next to *MTK Extreme Bandwidth Mod* to open immediately!
+- **Terminal CLI**: Run `su -c /data/adb/modules/mtk_bwmod/action.sh` to switch profiles or check status from the shell.
+
+### 🎛️ Control Panel Features
+1. **Live Hardware Ticker**: Real-time display of SoC model, device brand/model, active profile badge, active TCP congestion control algorithm, conntrack table count, and device uptime.
+2. **Profile Switcher**:
+   - ⚡ **Extreme Performance**: 64MB socket buffers, BBR/BIC, fq (Fair Queue), 0µs schedutil big-core response, 600 NAPI budget, 2,000,000 conntrack limit, WiFi power save OFF, Fast Dormancy OFF.
+   - ⚖️ **Balanced**: 32MB socket buffers, BBR/Cubic, fq_codel, 200µs schedutil, 400 NAPI budget, 500,000 conntrack table.
+   - 🔋 **Battery Saver**: 16MB socket buffers, Cubic, fq_codel, 500µs schedutil, 300 NAPI, aggressive modem sleep & WiFi power save ON.
+   - 🛠️ **Custom Profile**: Any custom adjustments made in the Options Editor are saved to `/data/local/tmp/mtk_bwmod_custom.sh` and automatically re-applied at every boot!
+3. **Live Telemetry & Diagnostics**:
+   - Real-time socket buffer usage, active Conntrack table utilization meter, CPU Schedutil response rates, and network IRQ core affinity.
+   - Live Cellular/NR/IMS status: 5G NR, Standalone (SA), Non-Standalone (NSA), EN-DC, LTE-CA, VoLTE, VoNR, VoWiFi, and 256-QAM badges.
+   - Active network interfaces table: Interface name, IP address, qdisc, txqueuelen, and live RX/TX byte & packet counters.
+4. **Comprehensive Options Editor**:
+   - Edit TCP stack options, socket vectors, Fast Open, timestamps, SACK, ECN, PMTUD, keepalive, and FIN timeouts.
+   - Edit NAPI budgets, backlogs, RPS flow entries, default interface `txqueuelen`, qdisc (`fq`, `fq_codel`, `pfifo_fast`), and hardware offload (`GRO`/`GSO`/`TSO`).
+   - Edit big-core IRQ affinity masks and schedutil reaction speeds.
+   - Edit Netfilter conntrack table limits.
+   - Edit Radio/5G/IMS flags, Wi-Fi QoS, 5GHz preference, 802.11k/v/r roaming, beamforming, and custom DNS presets (Cloudflare, Google, Quad9, AdGuard).
+   - Enter arbitrary custom `sysctl -w`, `setprop`, or `tc` commands with persistent boot execution.
+5. **Diagnostics & Utilities**:
+   - Built-in ping latency diagnostic tool.
+   - Live module & kernel logging viewer.
+   - Quick one-tap device reboot button.
+
+---
+
 
 ## Features
 

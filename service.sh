@@ -468,3 +468,51 @@ sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=120      2>/dev/null
 sysctl -w net.netfilter.nf_conntrack_tcp_loose=1                 2>/dev/null
 ACTUAL=$(sysctl -n net.netfilter.nf_conntrack_max 2>/dev/null)
 log "[22] Conntrack max=${ACTUAL}, hash=${CT_HASH}, TCP_EST=600s"
+
+# =============================================================================
+# 23. WEB CONTROL PANEL DAEMON (Port 8096)
+# =============================================================================
+MODDIR="${0%/*}"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/mtk_bwmod"
+WEB_DIR="/data/local/mtk_bwmod/web"
+PORT=8096
+
+if [ -d "$MODDIR/web" ]; then
+  mkdir -p "$WEB_DIR" 2>/dev/null
+  cp -rf "$MODDIR/web/"* "$WEB_DIR/" 2>/dev/null
+  chmod -R 0755 "$WEB_DIR" 2>/dev/null
+  chmod 0755 "$WEB_DIR/cgi-bin/api.sh" 2>/dev/null
+fi
+
+BUSYBOX=""
+for b in /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox $(which busybox 2>/dev/null); do
+  if [ -x "$b" ]; then BUSYBOX="$b"; break; fi
+done
+
+if [ -n "$BUSYBOX" ] && [ -d "$WEB_DIR" ]; then
+  pkill -f "httpd -p .*:$PORT" 2>/dev/null
+  $BUSYBOX httpd -p 0.0.0.0:$PORT -h "$WEB_DIR"
+  log "[23] Web Control Panel active on http://0.0.0.0:$PORT"
+fi
+
+# =============================================================================
+# 24. PROFILE & CUSTOM SETTINGS RESTORATION
+# =============================================================================
+PROFILE_FILE="/data/local/tmp/mtk_bwmod_profile"
+CUSTOM_SH="/data/local/tmp/mtk_bwmod_custom.sh"
+SAVED_PROF=$(cat "$PROFILE_FILE" 2>/dev/null || echo "performance")
+
+if [ "$SAVED_PROF" = "custom" ] && [ -f "$CUSTOM_SH" ]; then
+  sh "$CUSTOM_SH" 2>/dev/null
+  log "[24] Custom user configuration restored"
+elif [ "$SAVED_PROF" = "battery" ]; then
+  [ -f "$MODDIR/action.sh" ] && sh "$MODDIR/action.sh" apply battery 2>/dev/null
+  log "[24] Restored Battery Saver profile"
+elif [ "$SAVED_PROF" = "balanced" ]; then
+  [ -f "$MODDIR/action.sh" ] && sh "$MODDIR/action.sh" apply balanced 2>/dev/null
+  log "[24] Restored Balanced profile"
+else
+  [ -f "$MODDIR/action.sh" ] && sh "$MODDIR/action.sh" apply performance 2>/dev/null
+  log "[24] Restored Extreme Performance profile"
+fi
+

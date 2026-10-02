@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MTK Extreme Bandwidth Mod — Control Panel</title>
+    <style>
+        :root {
+            --bg-base: #0a0d14;
+            --bg-panel: #111724;
+            --bg-card: #161f30;
+            --bg-card-hover: #1c273c;
+            --bg-input: #0e1420;
+            --border-dim: #222f46;
+            --border-bright: #3b5074;
+            --accent-cyan: #00f0ff;
+            --accent-green: #00ff88;
+            --accent-amber: #ffaa00;
+            --accent-red: #ff3366;
+            --accent-purple: #b34bff;
+            --text-primary: #f0f4fc;
+            --text-secondary: #8c9ebb;
+            --text-muted: #536480;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            font-size: 14px;
+            line-height: 1.5;
+            padding-bottom: 90px;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(180deg, #131b2c 0%, #0d131f 100%);
+            border-bottom: 1px solid var(--border-dim);
+            padding: 14px 18px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+
+        .header-titles h1 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .version-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+        }
+
+        .header-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            padding: 7px 11px;
+            border-radius: 7px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-cyan);
+            background: var(--bg-card-hover);
+        }
+
+        /* HARDWARE TICKER */
+        .hardware-ticker {
+            background: #0d121c;
+            border-bottom: 1px solid var(--border-dim);
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ticker-item b {
+            color: var(--text-primary);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        /* TABS */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-dim);
+            padding: 0 14px;
+            gap: 6px;
+            overflow-x: auto;
+            position: sticky;
+            top: 65px;
+            z-index: 90;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            border-bottom-color: var(--accent-cyan);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARDS & GRIDS */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 18px;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--border-bright);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        /* PROFILE CARDS */
+        .profile-card {
+            border: 2px solid var(--border-dim);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .profile-card.active-profile {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+            background: linear-gradient(180deg, #182538 0%, var(--bg-card) 100%);
+        }
+
+        .profile-card.active-profile::before {
+            content: "ACTIVE";
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent-cyan);
+            color: #000;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-card h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            min-height: 36px;
+        }
+
+        .profile-specs {
+            list-style: none;
+            font-size: 12px;
+            border-top: 1px solid var(--border-dim);
+            padding-top: 10px;
+            margin-bottom: 16px;
+        }
+
+        .profile-specs li {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            color: var(--text-secondary);
+        }
+
+        .profile-specs li b {
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+        }
+
+        .btn-apply-profile {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-bright);
+            color: var(--text-primary);
+            font-weight: 600;
+            padding: 9px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .profile-card.active-profile .btn-apply-profile {
+            background: var(--accent-cyan);
+            color: #000;
+            border-color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .btn-apply-profile:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+        }
+
+        /* METRIC CARDS */
+        .metric-value {
+            font-size: 26px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: #fff;
+            margin: 4px 0;
+        }
+
+        .metric-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-wrap {
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .badge-green { background: rgba(0, 255, 136, 0.15); color: var(--accent-green); border: 1px solid rgba(0, 255, 136, 0.3); }
+        .badge-cyan  { background: rgba(0, 240, 255, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 240, 255, 0.3); }
+        .badge-amber { background: rgba(255, 170, 0, 0.15); color: var(--accent-amber); border: 1px solid rgba(255, 170, 0, 0.3); }
+        .badge-dim   { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border-dim); }
+
+        /* FORM CONTROLS */
+        .form-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        .form-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            gap: 16px;
+        }
+
+        .form-row:last-child {
+            border-bottom: none;
+        }
+
+        .form-label {
+            flex: 1;
+        }
+
+        .form-label-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .form-label-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-family: var(--font-mono);
+        }
+
+        .form-control-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            background: var(--bg-input);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            padding: 7px 10px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        /* TOGGLE SWITCH */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-dim);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: rgba(0, 240, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        /* PRESET CHIPS */
+        .preset-chip {
+            background: var(--bg-input);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+        }
+
+        .preset-chip:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        /* FLOATING ACTION BAR */
+        .floating-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(17, 23, 36, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-bright);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+        }
+
+        .floating-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .floating-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #00aaff);
+            color: #000;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(0, 240, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            color: var(--text-primary);
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-bright);
+            background: var(--bg-card-hover);
+        }
+
+        /* TABLE */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-dim);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            color: var(--text-primary);
+        }
+
+        /* CONSOLE & LOGS */
+        .console-box {
+            background: #080b11;
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #bbf;
+            max-height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* TOAST */
+        #toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent-cyan);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            z-index: 9999;
+            display: none;
+            font-weight: 600;
+            font-size: 13px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .form-control-wrap {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .floating-bar {
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px 14px;
+            }
+            .floating-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-brand">
+            <div class="logo-icon">⚡</div>
+            <div class="header-titles">
+                <h1>MTK BWMod <span class="version-badge">v2.0</span></h1>
+                <div class="header-sub">MediaTek Extreme Bandwidth Optimizer · by hoc</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" id="btnRefresh" title="Refresh Live State">
+                🔄 <span style="display:none;" id="refreshText">Refresh</span>
+            </button>
+            <button class="btn-icon" id="btnReboot" title="Reboot Device">
+                ⚡ Reboot
+            </button>
+        </div>
+    </header>
+
+    <!-- HARDWARE TICKER -->
+    <div class="hardware-ticker">
+        <div class="ticker-item"><span class="pulse-dot"></span> <b>SoC:</b> <span id="tickSoc">Loading...</span></div>
+        <div class="ticker-item"><b>Device:</b> <span id="tickModel">...</span></div>
+        <div class="ticker-item"><b>Profile:</b> <span id="tickProfile" class="badge badge-cyan">...</span></div>
+        <div class="ticker-item"><b>TCP CC:</b> <span id="tickCC" class="badge badge-green">...</span></div>
+        <div class="ticker-item"><b>Conntrack:</b> <span id="tickCT">0/0</span></div>
+        <div class="ticker-item"><b>Uptime:</b> <span id="tickUptime">0m</span></div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="tab-profiles">⚡ Profiles</button>
+        <button class="tab-btn" data-tab="tab-telemetry">📊 Live Telemetry</button>
+        <button class="tab-btn" data-tab="tab-editor">🛠️ Options Editor</button>
+        <button class="tab-btn" data-tab="tab-diag">📡 Diagnostics & Logs</button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="container">
+
+        <!-- TAB 1: PROFILES -->
+        <section id="tab-profiles" class="tab-content active">
+            <div class="grid-3">
+                <!-- PERFORMANCE CARD -->
+                <div class="card profile-card" id="card-performance" onclick="selectProfile('performance')">
+                    <h3>⚡ Extreme Performance</h3>
+                    <div class="profile-desc">Maximum network throughput, lowest latency, 64MB buffers, BBR/fq, and instant CPU burst response.</div>
+                    <ul class="profile-specs">
+                        <li>TCP Buffers: <b>64 MB</b></li>
+                        <li>Congestion Ctrl: <b>BBR / BIC</b></li>
+                        <li>Queue Disc (qdisc): <b>fq (Fair Queue)</b></li>
+                        <li>Schedutil Burst: <b>0 µs (Instant)</b></li>
+                        <li>NAPI Budget: <b>600 packets</b></li>
+                        <li>Conntrack Table: <b>2,000,000</b></li>
+                        <li>Wi-Fi Power Save: <b>OFF</b></li>
+                        <li>Fast Dormancy: <b>OFF (Low Ping)</b></li>
+                    </ul>
+                    <button class="btn-apply-profile" onclick="applyProfile('performance'); event.stopPropagation();">Apply Performance</button>
+                </div>
+
+                <!-- BALANCED CARD -->
+                <div class="card profile-card" id="card-balanced" onclick="selectProfile('balanced')">
+                    <h3>⚖️ Balanced</h3>
+                    <div class="profile-desc">Optimal blend of high bandwidth, battery efficiency, and standard queue management for daily use.</div>
+                    <ul class="profile-specs">
+                        <li>TCP Buffers: <b>32 MB</b></li>
+                        <li>Congestion Ctrl: <b>BBR / Cubic</b></li>
+                        <li>Queue Disc (qdisc): <b>fq_codel</b></li>
+                        <li>Schedutil Burst: <b>200 µs</b></li>
+                        <li>NAPI Budget: <b>400 packets</b></li>
+                        <li>Conntrack Table: <b>500,000</b></li>
+                        <li>Wi-Fi Power Save: <b>Light</b></li>
+                        <li>Fast Dormancy: <b>Soft</b></li>
+                    </ul>
+                    <button class="btn-apply-profile" onclick="applyProfile('balanced'); event.stopPropagation();">Apply Balanced</button>
+                </div>
+
+                <!-- BATTERY CARD -->
+                <div class="card profile-card" id="card-battery" onclick="selectProfile('battery')">
+                    <h3>🔋 Battery Saver</h3>
+                    <div class="profile-desc">Conservative buffer footprint, aggressive modem sleep, and power-efficient pacing for extended battery life.</div>
+                    <ul class="profile-specs">
+                        <li>TCP Buffers: <b>16 MB</b></li>
+                        <li>Congestion Ctrl: <b>Cubic</b></li>
+                        <li>Queue Disc (qdisc): <b>fq_codel</b></li>
+                        <li>Schedutil Burst: <b>500 µs</b></li>
+                        <li>NAPI Budget: <b>300 packets</b></li>
+                        <li>Conntrack Table: <b>65,536</b></li>
+                        <li>Wi-Fi Power Save: <b>ON</b></li>
+                        <li>Fast Dormancy: <b>ON (Sleep)</b></li>
+                    </ul>
+                    <button class="btn-apply-profile" onclick="applyProfile('battery'); event.stopPropagation();">Apply Battery</button>
+                </div>
+            </div>
+
+            <!-- CUSTOM PROFILE CARD -->
+            <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--accent-purple);">
+                <div class="card-header">
+                    <div class="card-title">🛠️ Custom Profile Status</div>
+                    <span id="customBadge" class="badge badge-dim">STANDBY</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+                    When you customize parameters in the <b>Options Editor</b> tab and click <i>Apply & Save</i>, your custom configuration activates and automatically restores upon every boot.
+                </p>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-secondary" onclick="switchTab('tab-editor')">Open Options Editor</button>
+                    <button class="btn-secondary" onclick="resetDefaults()">Reset to Defaults</button>
+                </div>
+            </div>
+
+            <!-- PROFILE COMPARISON TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 Profile Parameter Matrix</div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>⚡ Performance</th>
+                                <th>⚖️ Balanced</th>
+                                <th>🔋 Battery Saver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Max Socket Buffer</td>
+                                <td><span class="badge badge-cyan">64 MB</span></td>
+                                <td><span class="badge badge-cyan">32 MB</span></td>
+                                <td><span class="badge badge-cyan">16 MB</span></td>
+                            </tr>
+                            <tr>
+                                <td>Congestion Algorithm</td>
+                                <td><b>BBR / BIC</b></td>
+                                <td><b>BBR / Cubic</b></td>
+                                <td><b>Cubic</b></td>
+                            </tr>
+                            <tr>
+                                <td>Packet Queue Disc</td>
+                                <td><b>fq (Fair Queue)</b></td>
+                                <td><b>fq_codel</b></td>
+                                <td><b>fq_codel</b></td>
+                            </tr>
+                            <tr>
+                                <td>Big Core Schedutil Up Rate</td>
+                                <td><b>0 µs (Instant)</b></td>
+                                <td><b>200 µs</b></td>
+                                <td><b>500 µs</b></td>
+                            </tr>
+                            <tr>
+                                <td>NAPI Budget</td>
+                                <td><b>600</b></td>
+                                <td><b>400</b></td>
+                                <td><b>300</b></td>
+                            </tr>
+                            <tr>
+                                <td>Max Conntrack Entries</td>
+                                <td><b>2,000,000</b></td>
+                                <td><b>500,000</b></td>
+                                <td><b>65,536</b></td>
+                            </tr>
+                            <tr>
+                                <td>Wi-Fi Power Save</td>
+                                <td><span class="badge badge-green">OFF (Full Speed)</span></td>
+                                <td><span class="badge badge-amber">Normal</span></td>
+                                <td><span class="badge badge-cyan">Aggressive ON</span></td>
+                            </tr>
+                            <tr>
+                                <td>Fast Dormancy (Modem Sleep)</td>
+                                <td><span class="badge badge-green">Disabled (Low Ping)</span></td>
+                                <td><span class="badge badge-amber">Standard</span></td>
+                                <td><span class="badge badge-cyan">Enabled (Power Save)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: TELEMETRY -->
+        <section id="tab-telemetry" class="tab-content">
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">TCP Congestion Control</div>
+                        <span id="telCcBadge" class="badge badge-green">...</span>
+                    </div>
+                    <div class="metric-value" id="telCc">...</div>
+                    <div class="metric-sub" id="telAvailCc">Available: ...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Max Socket Buffers</div>
+                        <span class="badge badge-cyan">sysctl</span>
+                    </div>
+                    <div class="metric-value" id="telRmem">...</div>
+                    <div class="metric-sub" id="telWmem">Write: ...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Active Conntrack Table</div>
+                        <span id="telCtBadge" class="badge badge-cyan">...</span>
+                    </div>
+                    <div class="metric-value" id="telCtCount">0</div>
+                    <div class="metric-sub" id="telCtMax">Max Limit: 0</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="telCtBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPU & IRQ -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">CPU Schedutil Big-Core Response</div>
+                        <span class="badge badge-cyan">Big Cores</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-around; margin:15px 0;">
+                        <div style="text-align:center;">
+                            <div class="metric-value" id="telUpRate">0µs</div>
+                            <div class="metric-sub">Up Rate Limit</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div class="metric-value" id="telDownRate">0µs</div>
+                            <div class="metric-sub">Down Rate Limit</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Network IRQ Affinity</div>
+                        <span class="badge badge-green">Mask 0x<span id="telIrqMask">f0</span></span>
+                    </div>
+                    <div class="metric-value" id="telIrqCount">0</div>
+                    <div class="metric-sub">Network IRQs steered to high-performance cores</div>
+                </div>
+            </div>
+
+            <!-- RADIO & CELLULAR STATUS -->
+            <div class="card" style="margin-bottom: 16px;">
+                <div class="card-header">
+                    <div class="card-title">Cellular, NR 5G & IMS Subsystem</div>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;" id="radioChips">
+                    <span class="badge badge-dim" id="chipNr">5G NR: --</span>
+                    <span class="badge badge-dim" id="chipSa">SA: --</span>
+                    <span class="badge badge-dim" id="chipNsa">NSA: --</span>
+                    <span class="badge badge-dim" id="chipEndc">EN-DC: --</span>
+                    <span class="badge badge-dim" id="chipLteCa">LTE CA: --</span>
+                    <span class="badge badge-dim" id="chipVolte">VoLTE: --</span>
+                    <span class="badge badge-dim" id="chipVonr">VoNR: --</span>
+                    <span class="badge badge-dim" id="chipWfc">VoWiFi: --</span>
+                    <span class="badge badge-dim" id="chipQam">256-QAM: --</span>
+                </div>
+            </div>
+
+            <!-- ACTIVE INTERFACES -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Active Network Interfaces & Traffic</div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Interface</th>
+                                <th>IP Address</th>
+                                <th>qdisc</th>
+                                <th>txqueuelen</th>
+                                <th>RX Traffic</th>
+                                <th>TX Traffic</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ifaceTableBody">
+                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Scanning network interfaces...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: OPTIONS EDITOR (EDIT ALL OPTIONS) -->
+        <section id="tab-editor" class="tab-content">
+            <form id="customOptionsForm" onsubmit="event.preventDefault(); saveCustomOptions();">
+                
+                <!-- 1. TCP / IP KERNEL STACK -->
+                <div class="form-section">
+                    <div class="form-section-title">🌐 1. TCP / IP Protocol Engine</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Congestion Control</div>
+                            <div class="form-label-desc">net.ipv4.tcp_congestion_control</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <select id="opt_tcp_cc" name="tcp_congestion_control">
+                                <option value="bbr">bbr</option>
+                                <option value="bic">bic</option>
+                                <option value="cubic">cubic</option>
+                                <option value="reno">reno</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Max Socket Receive Buffer (rmem_max)</div>
+                            <div class="form-label-desc">net.core.rmem_max (Bytes)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_rmem_max', 16777216)">16MB</span>
+                            <span class="preset-chip" onclick="setVal('opt_rmem_max', 33554432)">32MB</span>
+                            <span class="preset-chip" onclick="setVal('opt_rmem_max', 67108864)">64MB</span>
+                            <input type="number" id="opt_rmem_max" name="rmem_max" style="width:130px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Max Socket Send Buffer (wmem_max)</div>
+                            <div class="form-label-desc">net.core.wmem_max (Bytes)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_wmem_max', 16777216)">16MB</span>
+                            <span class="preset-chip" onclick="setVal('opt_wmem_max', 33554432)">32MB</span>
+                            <span class="preset-chip" onclick="setVal('opt_wmem_max', 67108864)">64MB</span>
+                            <input type="number" id="opt_wmem_max" name="wmem_max" style="width:130px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Receive Memory Vector</div>
+                            <div class="form-label-desc">net.ipv4.tcp_rmem (min default max)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="text" id="opt_tcp_rmem" name="tcp_rmem" style="width:200px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Send Memory Vector</div>
+                            <div class="form-label-desc">net.ipv4.tcp_wmem (min default max)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="text" id="opt_tcp_wmem" name="tcp_wmem" style="width:200px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Fast Open (TFO)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_fastopen (0:Off, 1:Client, 2:Server, 3:Both)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <select id="opt_tcp_tfo" name="tcp_fastopen">
+                                <option value="0">0 - Disabled</option>
+                                <option value="1">1 - Client only</option>
+                                <option value="2">2 - Server only</option>
+                                <option value="3">3 - Client & Server</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Timestamps</div>
+                            <div class="form-label-desc">net.ipv4.tcp_timestamps (0 removes 12-byte header overhead)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_tcp_ts" name="tcp_timestamps"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Selective ACK (SACK)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_sack</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_tcp_sack" name="tcp_sack"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Explicit Congestion Notification (ECN)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_ecn</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_tcp_ecn" name="tcp_ecn"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP MTU Probing (PMTUD)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_mtu_probing</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <select id="opt_tcp_mtu_probe" name="tcp_mtu_probing">
+                                <option value="0">0 - Disabled</option>
+                                <option value="1">1 - On Blackhole</option>
+                                <option value="2">2 - Always Enabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Slow Start After Idle</div>
+                            <div class="form-label-desc">net.ipv4.tcp_slow_start_after_idle (0 preserves cwnd speed)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_tcp_ss_idle" name="tcp_slow_start_after_idle"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Not-Sent Lowat Threshold</div>
+                            <div class="form-label-desc">net.ipv4.tcp_notsent_lowat (Bytes)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_tcp_lowat" name="tcp_notsent_lowat" style="width:110px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Keepalive Time (Secs)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_keepalive_time</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_tcp_keeptime" name="tcp_keepalive_time" style="width:80px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP FIN Timeout (Secs)</div>
+                            <div class="form-label-desc">net.ipv4.tcp_fin_timeout</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_tcp_fintimeout" name="tcp_fin_timeout" style="width:80px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. NAPI & CORE NETWORK -->
+                <div class="form-section">
+                    <div class="form-section-title">⚡ 2. NAPI, Netdev & Queues</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">NAPI Netdev Budget</div>
+                            <div class="form-label-desc">net.core.netdev_budget (Packets per interrupt cycle)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_netdev_budget', 300)">300</span>
+                            <span class="preset-chip" onclick="setVal('opt_netdev_budget', 400)">400</span>
+                            <span class="preset-chip" onclick="setVal('opt_netdev_budget', 600)">600</span>
+                            <input type="number" id="opt_netdev_budget" name="netdev_budget" style="width:90px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Netdev Max Backlog</div>
+                            <div class="form-label-desc">net.core.netdev_max_backlog (Input queue size)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_netdev_backlog" name="netdev_max_backlog" style="width:110px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">RPS Sock Flow Entries</div>
+                            <div class="form-label-desc">net.core.rps_sock_flow_entries</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_rps_flow" name="rps_sock_flow_entries" style="width:110px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Default Interface txqueuelen</div>
+                            <div class="form-label-desc">Transmit queue length on all active netdevs</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_txqueuelen', 1000)">1000</span>
+                            <span class="preset-chip" onclick="setVal('opt_txqueuelen', 2000)">2000</span>
+                            <span class="preset-chip" onclick="setVal('opt_txqueuelen', 3000)">3000</span>
+                            <input type="number" id="opt_txqueuelen" name="txqueuelen" style="width:90px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Queue Discipline (qdisc)</div>
+                            <div class="form-label-desc">Traffic scheduling algorithm across all non-AP interfaces</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <select id="opt_qdisc" name="qdisc_type">
+                                <option value="fq">fq (Fair Queue - Best with BBR)</option>
+                                <option value="fq_codel">fq_codel (CoDel Bufferbloat killer)</option>
+                                <option value="pfifo_fast">pfifo_fast (Kernel default)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Hardware Offloading (GRO / GSO / TSO)</div>
+                            <div class="form-label-desc">Offloads packet segmentation & reassembly to hardware</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_hw_offload" name="hw_offload"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. CPU SCHEDUTIL & IRQ TUNING -->
+                <div class="form-section">
+                    <div class="form-section-title">🧠 3. CPU Schedutil & IRQ Affinity</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Big Core CPU Affinity Mask</div>
+                            <div class="form-label-desc">SMP affinity mask for network IRQs (Hex: f0 = Octa-core Big)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="text" id="opt_aff_mask" name="cpu_affinity_mask" style="width:90px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Schedutil Up Rate Limit (µs)</div>
+                            <div class="form-label-desc">Big-core reaction time to incoming network packets (0 = instant)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_sched_up', 0)">0 (Fast)</span>
+                            <span class="preset-chip" onclick="setVal('opt_sched_up', 200)">200</span>
+                            <span class="preset-chip" onclick="setVal('opt_sched_up', 500)">500</span>
+                            <input type="number" id="opt_sched_up" name="schedutil_up_rate_limit_us" style="width:80px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Schedutil Down Rate Limit (µs)</div>
+                            <div class="form-label-desc">Big-core frequency ramp-down delay</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_sched_down" name="schedutil_down_rate_limit_us" style="width:80px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">IRQ Coalescing Batch Window</div>
+                            <div class="form-label-desc">Batch rx-usecs / tx-usecs packet moderation</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_irq_rx', 50)">50µs</span>
+                            <span class="preset-chip" onclick="setVal('opt_irq_rx', 100)">100µs</span>
+                            <span class="preset-chip" onclick="setVal('opt_irq_rx', 200)">200µs</span>
+                            <input type="number" id="opt_irq_rx" name="irq_rx_usecs" style="width:70px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. NETFILTER & CONNTRACK -->
+                <div class="form-section">
+                    <div class="form-section-title">🛡️ 4. Netfilter & Connection Tracking</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Max Conntrack Entries</div>
+                            <div class="form-label-desc">net.netfilter.nf_conntrack_max (Prevents table exhaustion)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setVal('opt_ct_max', 65536)">65K</span>
+                            <span class="preset-chip" onclick="setVal('opt_ct_max', 500000)">500K</span>
+                            <span class="preset-chip" onclick="setVal('opt_ct_max', 2000000)">2M</span>
+                            <input type="number" id="opt_ct_max" name="nf_conntrack_max" style="width:120px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">TCP Established Timeout (Secs)</div>
+                            <div class="form-label-desc">net.netfilter.nf_conntrack_tcp_timeout_established</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="number" id="opt_ct_est" name="nf_conntrack_tcp_timeout_established" style="width:90px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. RADIO, 5G & IMS PROPS -->
+                <div class="form-section">
+                    <div class="form-section-title">📶 5. Radio, 5G NR & IMS Flags</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">5G NR Mode Support</div>
+                            <div class="form-label-desc">persist.vendor.radio.nr.enabled & force_nr</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_nr" name="nr_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">5G NR Standalone (SA) Mode</div>
+                            <div class="form-label-desc">persist.vendor.radio.nr_sa_mode</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_sa" name="nr_sa_mode"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">5G NR Non-Standalone (NSA) Mode</div>
+                            <div class="form-label-desc">persist.vendor.radio.nr_nsa_mode</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_nsa" name="nr_nsa_mode"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">EN-DC Dual Connectivity</div>
+                            <div class="form-label-desc">persist.vendor.radio.endc_enabled</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_endc" name="endc_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">LTE Carrier Aggregation (CA)</div>
+                            <div class="form-label-desc">persist.vendor.radio.lte_ul_ca & lte_dl_ca</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_lte_ca" name="lte_ca_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">VoLTE & HD Voice Overrides</div>
+                            <div class="form-label-desc">persist.vendor.radio.volte_enabled & persist.dbg.volte_avail_ovr</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_volte" name="volte_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">VoNR (Voice over 5G NR)</div>
+                            <div class="form-label-desc">persist.vendor.radio.vonr_enabled</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_vonr" name="vonr_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">256-QAM Modulation Boost</div>
+                            <div class="form-label-desc">persist.vendor.radio.nr_256qam & lte_256qam</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_qam" name="qam256_enabled"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Disable Fast Dormancy (Low Ping)</div>
+                            <div class="form-label-desc">persist.vendor.radio.fd.disable (Prevents modem idle latency)</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_radio_fd" name="fastdorm_disable"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. WI-FI & DNS PROPS -->
+                <div class="form-section">
+                    <div class="form-section-title">📡 6. Wi-Fi QoS, Roaming & Custom DNS</div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Wi-Fi Power Save Mode</div>
+                            <div class="form-label-desc">Turn OFF for maximum throughput and minimum ping jitter</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_wifi_ps" name="wifi_power_save"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Prefer 5GHz Band</div>
+                            <div class="form-label-desc">wifi.5ghz.preferred</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_wifi_5g" name="wifi_5ghz_preferred"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">802.11k/v/r Fast Roaming</div>
+                            <div class="form-label-desc">Fast BSS Transition and Neighbor Reports</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_wifi_roam" name="wifi_fast_roam"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Beamforming CSI Feedback</div>
+                            <div class="form-label-desc">SU/MU beamformee CSI report steering to AP</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <label class="switch"><input type="checkbox" id="opt_wifi_bf" name="wifi_beamforming"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">
+                            <div class="form-label-title">Primary & Secondary DNS</div>
+                            <div class="form-label-desc">Overrides DHCP DNS on all active interfaces</div>
+                        </div>
+                        <div class="form-control-wrap">
+                            <input type="text" id="opt_dns1" name="custom_dns1" placeholder="1.1.1.1" style="width:110px;">
+                            <input type="text" id="opt_dns2" name="custom_dns2" placeholder="1.0.0.1" style="width:110px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label"><div class="form-label-desc">Quick DNS Presets:</div></div>
+                        <div class="form-control-wrap">
+                            <span class="preset-chip" onclick="setDns('1.1.1.1', '1.0.0.1')">Cloudflare</span>
+                            <span class="preset-chip" onclick="setDns('8.8.8.8', '8.8.4.4')">Google</span>
+                            <span class="preset-chip" onclick="setDns('9.9.9.9', '149.112.112.112')">Quad9</span>
+                            <span class="preset-chip" onclick="setDns('94.140.14.14', '94.140.15.15')">AdGuard</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. ARBITRARY CUSTOM COMMANDS -->
+                <div class="form-section">
+                    <div class="form-section-title">⚙️ 7. Custom Kernel & Property Commands</div>
+                    <div class="form-label-desc" style="margin-bottom:8px;">
+                        Enter arbitrary <code>sysctl -w</code>, <code>setprop</code>, or <code>tc</code> commands. They will be executed and appended to the persistent boot script:
+                    </div>
+                    <textarea id="opt_arbitrary_cmd" name="arbitrary_cmd" rows="4" style="width:100%; resize:vertical;" placeholder="# Example:&#10;sysctl -w net.ipv4.ip_default_ttl=64&#10;setprop persist.vendor.radio.smart.data.switch 1"></textarea>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- TAB 4: DIAGNOSTICS & LOGS -->
+        <section id="tab-diag" class="tab-content">
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-header">
+                    <div class="card-title">📡 Network Ping Diagnostic</div>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:12px;">
+                    <input type="text" id="pingHost" value="1.1.1.1" placeholder="Host / IP" style="flex:1;">
+                    <button class="btn-primary" onclick="runPing()">Ping Test</button>
+                </div>
+                <div class="console-box" id="pingOutput" style="height:120px;">Enter host and click Ping Test...</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📜 Live Module & Kernel Log</div>
+                    <button class="btn-icon" onclick="fetchLogs()">🔄 Refresh Log</button>
+                </div>
+                <div class="console-box" id="logOutput">Fetching /data/local/tmp/mtk_bwmod.log...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FLOATING ACTION BAR FOR TAB-EDITOR -->
+    <div class="floating-bar" id="editorBar" style="display:none;">
+        <div class="floating-info">
+            <span class="pulse-dot"></span>
+            <span>Options Editor Active · Changes will persist across reboots</span>
+        </div>
+        <div class="floating-buttons">
+            <button class="btn-secondary" onclick="loadProfilePreset('performance')">⚡ Load Perf</button>
+            <button class="btn-secondary" onclick="loadProfilePreset('balanced')">⚖️ Load Bal</button>
+            <button class="btn-primary" onclick="saveCustomOptions()">💾 Apply & Save</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast"></div>
+
+    <script>
+        let liveState = null;
+        let activeTab = 'tab-profiles';
+        let refreshTimer = null;
+
+        // UI Helpers
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.innerText = msg;
+            t.style.borderColor = isError ? 'var(--accent-red)' : 'var(--accent-cyan)';
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function setElemText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = (text !== undefined && text !== null) ? text : '';
+        }
+
+        function setElemHtml(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = (html !== undefined && html !== null) ? html : '';
+        }
+
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== undefined && val !== null) ? val : '';
+        }
+
+        function setCheck(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.checked = (val === true || val === 1 || val === '1');
+        }
+
+        function setDns(d1, d2) {
+            setVal('opt_dns1', d1);
+            setVal('opt_dns2', d2);
+            showToast('DNS Preset selected: ' + d1);
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.toggle('active', c.id === tabId);
+            });
+            activeTab = tabId;
+            const bar = document.getElementById('editorBar');
+            if (bar) bar.style.display = (tabId === 'tab-editor') ? 'flex' : 'none';
+
+            if (tabId === 'tab-diag') fetchLogs();
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // Fetch Live State
+        let isFetching = false;
+        async function fetchState() {
+            if (isFetching) return;
+            isFetching = true;
+            try {
+                const res = await fetch('/cgi-bin/api.sh?action=get_state&_t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) {
+                    setElemText('tickSoc', 'HTTP ' + res.status);
+                    return;
+                }
+                let text = await res.text();
+                // Clean any rogue ASCII control characters except CR and LF
+                text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                // Replace raw tabs with single space so JSON.parse never fails
+                text = text.replace(/\t/g, ' ');
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (jsonErr) {
+                    setElemText('tickSoc', 'JSON ERR: ' + jsonErr.message);
+                    console.error('JSON Parse Error:', jsonErr, 'Raw Text:', text);
+                    return;
+                }
+                liveState = data;
+                renderState(data);
+            } catch (e) {
+                setElemText('tickSoc', 'NET ERR: ' + e.message);
+                console.error('fetchState Exception:', e);
+            } finally {
+                isFetching = false;
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Render State to UI
+        function renderState(data) {
+            if (!data) return;
+
+            // 1. Ticker & Headers
+            try {
+                const soc = data.device?.soc || 'MT6853';
+                const model = (data.device?.brand ? data.device.brand + ' ' : '') + (data.device?.model || 'Samsung Galaxy');
+                setElemText('tickSoc', soc);
+                setElemText('tickModel', model);
+
+                const prof = (data.profile || 'performance').toLowerCase();
+                const profEl = document.getElementById('tickProfile');
+                if (profEl) {
+                    profEl.innerText = prof.toUpperCase();
+                    if (prof === 'performance') profEl.className = 'badge badge-green';
+                    else if (prof === 'balanced') profEl.className = 'badge badge-cyan';
+                    else if (prof === 'battery') profEl.className = 'badge badge-amber';
+                    else profEl.className = 'badge badge-purple';
+                }
+
+                const cc = data.tcp?.cc || 'bic';
+                setElemText('tickCC', cc);
+
+                const ctCount = data.conntrack?.count || 0;
+                const ctMax = data.conntrack?.max || 65536;
+                setElemText('tickCT', `${ctCount.toLocaleString()} / ${ctMax.toLocaleString()}`);
+
+                const uptimeM = Math.floor((data.device?.uptime_secs || 0) / 60);
+                setElemText('tickUptime', `${uptimeM}m`);
+            } catch (err) {
+                console.error('Ticker render error:', err);
+            }
+
+            // 2. Tab 1: Profiles Highlight
+            try {
+                const prof = (data.profile || 'performance').toLowerCase();
+                ['performance', 'balanced', 'battery'].forEach(p => {
+                    const card = document.getElementById(`card-${p}`);
+                    if (card) card.classList.toggle('active-profile', prof === p);
+                });
+                const custBadge = document.getElementById('customBadge');
+                if (custBadge) {
+                    if (prof === 'custom') {
+                        custBadge.innerText = 'ACTIVE';
+                        custBadge.className = 'badge badge-cyan';
+                    } else {
+                        custBadge.innerText = 'STANDBY';
+                        custBadge.className = 'badge badge-dim';
+                    }
+                }
+            } catch (err) {
+                console.error('Profile card render error:', err);
+            }
+
+            // 3. Tab 2: Telemetry
+            try {
+                const cc = data.tcp?.cc || 'bic';
+                setElemText('telCc', cc.toUpperCase());
+                setElemText('telCcBadge', cc);
+                setElemText('telAvailCc', 'Available in kernel: ' + (data.tcp?.available_cc || cc));
+
+                const rmem = data.tcp?.rmem_max || 0;
+                const wmem = data.tcp?.wmem_max || 0;
+                setElemText('telRmem', (rmem / 1024 / 1024).toFixed(0) + ' MB');
+                setElemText('telWmem', 'Write buffer: ' + (wmem / 1024 / 1024).toFixed(0) + ' MB');
+
+                const ctCount = data.conntrack?.count || 0;
+                const ctMax = data.conntrack?.max || 65536;
+                setElemText('telCtCount', ctCount.toLocaleString());
+                setElemText('telCtMax', 'Max Table Limit: ' + ctMax.toLocaleString());
+                const ctPct = ctMax > 0 ? Math.min(100, (ctCount / ctMax * 100)).toFixed(1) : 0;
+                setElemText('telCtBadge', ctPct + '% used');
+                const ctBar = document.getElementById('telCtBar');
+                if (ctBar) ctBar.style.width = ctPct + '%';
+
+                if (data.schedutil) {
+                    setElemText('telUpRate', (data.schedutil.up_rate_limit_us ?? 0) + 'µs');
+                    setElemText('telDownRate', (data.schedutil.down_rate_limit_us ?? 0) + 'µs');
+                }
+                if (data.irq) {
+                    setElemText('telIrqCount', data.irq.count ?? 0);
+                    setElemText('telIrqMask', data.irq.mask || 'f0');
+                }
+            } catch (err) {
+                console.error('Telemetry render error:', err);
+            }
+
+            // 4. Radio Chips
+            try {
+                if (data.radio) {
+                    updateChip('chipNr', '5G NR: ' + (data.radio.nr_enabled === '1' ? 'ON' : 'OFF'), data.radio.nr_enabled === '1');
+                    updateChip('chipSa', 'SA: ' + (data.radio.nr_sa_mode === '1' ? 'ON' : 'OFF'), data.radio.nr_sa_mode === '1');
+                    updateChip('chipNsa', 'NSA: ' + (data.radio.nr_nsa_mode === '1' ? 'ON' : 'OFF'), data.radio.nr_nsa_mode === '1');
+                    updateChip('chipEndc', 'EN-DC: ' + (data.radio.endc_enabled === '1' ? 'ON' : 'OFF'), data.radio.endc_enabled === '1');
+                    updateChip('chipLteCa', 'LTE CA: ' + (data.radio.lte_ca === '1' ? 'ON' : 'OFF'), data.radio.lte_ca === '1');
+                    updateChip('chipVolte', 'VoLTE: ' + (data.radio.volte === '1' ? 'ON' : 'OFF'), data.radio.volte === '1');
+                    updateChip('chipVonr', 'VoNR: ' + (data.radio.vonr === '1' ? 'ON' : 'OFF'), data.radio.vonr === '1');
+                    updateChip('chipWfc', 'VoWiFi: ' + (data.radio.wfc === '1' ? 'ON' : 'OFF'), data.radio.wfc === '1');
+                    updateChip('chipQam', '256-QAM: ' + (data.radio.qam256 === '1' ? 'ON' : 'OFF'), data.radio.qam256 === '1');
+                }
+            } catch (err) {
+                console.error('Radio chips render error:', err);
+            }
+
+            // 5. Interfaces Table
+            try {
+                const tbody = document.getElementById('ifaceTableBody');
+                if (tbody) {
+                    if (data.interfaces && data.interfaces.length > 0) {
+                        tbody.innerHTML = data.interfaces.map(i => `
+                            <tr>
+                                <td><b>${i.name}</b></td>
+                                <td><span style="font-family:var(--font-mono); color:var(--accent-cyan);">${i.ip || 'No IP'}</span></td>
+                                <td><span class="badge badge-dim">${i.qdisc || 'none'}</span></td>
+                                <td>${i.txq}</td>
+                                <td>${formatBytes(i.rx_bytes)}</td>
+                                <td>${formatBytes(i.tx_bytes)}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No active interfaces found</td></tr>';
+                    }
+                }
+            } catch (err) {
+                console.error('Interfaces render error:', err);
+            }
+
+            // 6. Populate Editor Form (Only on initial load or if user hasn't edited)
+            try {
+                if (!window.editorInitialized) {
+                    populateEditor(data);
+                    window.editorInitialized = true;
+                }
+            } catch (err) {
+                console.error('Editor populate error:', err);
+            }
+        }
+
+        function updateChip(id, text, active) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerText = text;
+            el.className = active ? 'badge badge-green' : 'badge badge-dim';
+        }
+
+        // Populate Form Controls
+        function populateEditor(d) {
+            if (!d) return;
+
+            // Populate CC dropdown with kernel available options
+            const selCc = document.getElementById('opt_tcp_cc');
+            if (selCc && d.tcp && d.tcp.available_cc) {
+                const ccs = d.tcp.available_cc.split(' ').filter(c => c.trim().length > 0);
+                if (ccs.length > 0) {
+                    selCc.innerHTML = ccs.map(c => `<option value="${c}">${c}</option>`).join('');
+                }
+            }
+            if (d.tcp) {
+                if (selCc) selCc.value = d.tcp.cc || 'cubic';
+                setVal('opt_rmem_max', d.tcp.rmem_max);
+                setVal('opt_wmem_max', d.tcp.wmem_max);
+                setVal('opt_tcp_rmem', d.tcp.tcp_rmem);
+                setVal('opt_tcp_wmem', d.tcp.tcp_wmem);
+                setVal('opt_tcp_tfo', d.tcp.tcp_fastopen);
+                setCheck('opt_tcp_ts', d.tcp.tcp_timestamps == 1);
+                setCheck('opt_tcp_sack', d.tcp.tcp_sack == 1);
+                setCheck('opt_tcp_ecn', d.tcp.tcp_ecn == 1);
+                setVal('opt_tcp_mtu_probe', d.tcp.tcp_mtu_probing);
+                setCheck('opt_tcp_ss_idle', d.tcp.tcp_slow_start_after_idle == 1);
+                setVal('opt_tcp_lowat', d.tcp.tcp_notsent_lowat);
+                setVal('opt_tcp_keeptime', d.tcp.tcp_keepalive_time);
+                setVal('opt_tcp_fintimeout', d.tcp.tcp_fin_timeout);
+            }
+
+            if (d.core) {
+                setVal('opt_netdev_budget', d.core.netdev_budget);
+                setVal('opt_netdev_backlog', d.core.netdev_max_backlog);
+                setVal('opt_rps_flow', d.core.rps_sock_flow_entries);
+            }
+
+            if (d.conntrack) {
+                setVal('opt_ct_max', d.conntrack.max);
+                setVal('opt_ct_est', d.conntrack.tcp_timeout_established);
+            }
+
+            if (d.schedutil) {
+                setVal('opt_sched_up', d.schedutil.up_rate_limit_us);
+                setVal('opt_sched_down', d.schedutil.down_rate_limit_us);
+            }
+
+            if (d.irq) {
+                setVal('opt_aff_mask', d.irq.mask);
+            }
+
+            if (d.radio) {
+                setCheck('opt_radio_nr', d.radio.nr_enabled == '1');
+                setCheck('opt_radio_sa', d.radio.nr_sa_mode == '1');
+                setCheck('opt_radio_nsa', d.radio.nr_nsa_mode == '1');
+                setCheck('opt_radio_endc', d.radio.endc_enabled == '1');
+                setCheck('opt_radio_lte_ca', d.radio.lte_ca == '1');
+                setCheck('opt_radio_volte', d.radio.volte == '1');
+                setCheck('opt_radio_vonr', d.radio.vonr == '1');
+                setCheck('opt_radio_qam', d.radio.qam256 == '1');
+                setCheck('opt_radio_fd', d.radio.fastdorm_disable == '1');
+            }
+
+            if (d.wifi) {
+                setCheck('opt_wifi_ps', d.wifi.ps_mode == '1');
+                setCheck('opt_wifi_5g', d.wifi.preferred_5g == '1');
+                setCheck('opt_wifi_roam', d.wifi.roaming_fast == '1');
+                setCheck('opt_wifi_bf', d.wifi.beamforming == '1');
+                setVal('opt_dns1', d.wifi.dns1 || '1.1.1.1');
+                setVal('opt_dns2', d.wifi.dns2 || '1.0.0.1');
+            }
+
+            // Defaults
+            setVal('opt_txqueuelen', 3000);
+            setCheck('opt_hw_offload', true);
+            setVal('opt_irq_rx', 50);
+        }
+
+        // Apply Preset Profile
+        async function applyProfile(name) {
+            showToast(`Applying ${name} profile...`);
+            try {
+                const res = await fetch(`/cgi-bin/api.sh?action=apply_profile&profile=${name}`);
+                const r = await res.json();
+                if (r.success) {
+                    showToast(`✓ ${r.message}`);
+                    fetchState();
+                } else {
+                    showToast(`Error: ${r.message}`, true);
+                }
+            } catch (e) {
+                showToast(`Request failed: ${e}`, true);
+            }
+        }
+
+        function selectProfile(name) {
+            applyProfile(name);
+        }
+
+        // Load Preset into Editor
+        function loadProfilePreset(name) {
+            if (name === 'performance') {
+                setVal('opt_rmem_max', 67108864);
+                setVal('opt_wmem_max', 67108864);
+                setVal('opt_tcp_rmem', '4096 1048576 67108864');
+                setVal('opt_tcp_wmem', '4096 1048576 67108864');
+                setVal('opt_netdev_budget', 600);
+                setVal('opt_netdev_backlog', 32768);
+                setVal('opt_ct_max', 2000000);
+                setVal('opt_sched_up', 0);
+                setVal('opt_sched_down', 500);
+                setVal('opt_txqueuelen', 3000);
+                setVal('opt_qdisc', 'fq');
+                document.getElementById('opt_tcp_ts').checked = false;
+                document.getElementById('opt_wifi_ps').checked = false;
+                document.getElementById('opt_radio_fd').checked = true;
+                showToast('⚡ Performance preset loaded into editor');
+            } else if (name === 'balanced') {
+                setVal('opt_rmem_max', 33554432);
+                setVal('opt_wmem_max', 33554432);
+                setVal('opt_tcp_rmem', '4096 524288 33554432');
+                setVal('opt_tcp_wmem', '4096 524288 33554432');
+                setVal('opt_netdev_budget', 400);
+                setVal('opt_netdev_backlog', 16384);
+                setVal('opt_ct_max', 500000);
+                setVal('opt_sched_up', 200);
+                setVal('opt_sched_down', 1000);
+                setVal('opt_txqueuelen', 2000);
+                setVal('opt_qdisc', 'fq_codel');
+                document.getElementById('opt_tcp_ts').checked = true;
+                document.getElementById('opt_wifi_ps').checked = false;
+                document.getElementById('opt_radio_fd').checked = false;
+                showToast('⚖️ Balanced preset loaded into editor');
+            }
+        }
+
+        // Save Custom Options
+        async function saveCustomOptions() {
+            showToast('Applying & Saving Custom Options...');
+            const form = document.getElementById('customOptionsForm');
+            const data = new URLSearchParams();
+
+            data.append('action', 'save_custom');
+
+            // Text/select/number inputs
+            const inputs = form.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
+            inputs.forEach(i => {
+                if (i.name) data.append(i.name, i.value);
+            });
+
+            // Checkbox switches (0 or 1)
+            const checks = form.querySelectorAll('input[type="checkbox"]');
+            checks.forEach(c => {
+                if (c.name) {
+                    if (c.name === 'hw_offload') {
+                        data.append('hw_gro', c.checked ? '1' : '0');
+                        data.append('hw_gso', c.checked ? '1' : '0');
+                        data.append('hw_tso', c.checked ? '1' : '0');
+                    } else {
+                        data.append(c.name, c.checked ? '1' : '0');
+                    }
+                }
+            });
+
+            try {
+                const res = await fetch('/cgi-bin/api.sh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data.toString()
+                });
+                const r = await res.json();
+                if (r.success) {
+                    showToast('✓ Custom parameters applied and saved to boot!');
+                    fetchState();
+                } else {
+                    showToast('Failed to apply: ' + r.message, true);
+                }
+            } catch (e) {
+                showToast('Save error: ' + e, true);
+            }
+        }
+
+        // Reset Defaults
+        async function resetDefaults() {
+            if (!confirm('Reset all parameters to Extreme Performance defaults?')) return;
+            try {
+                const res = await fetch('/cgi-bin/api.sh?action=reset_defaults');
+                const r = await res.json();
+                showToast(r.message || 'Reset complete');
+                window.editorInitialized = false;
+                fetchState();
+            } catch (e) {
+                showToast('Error resetting: ' + e, true);
+            }
+        }
+
+        // Run Ping Diagnostic
+        async function runPing() {
+            const host = document.getElementById('pingHost').value.trim() || '1.1.1.1';
+            const out = document.getElementById('pingOutput');
+            out.innerText = `Pinging ${host}...`;
+            try {
+                const res = await fetch(`/cgi-bin/api.sh?action=ping&host=${encodeURIComponent(host)}`);
+                const r = await res.json();
+                out.innerText = (r.output || '').replace(/\|/g, '\n');
+            } catch (e) {
+                out.innerText = 'Ping failed: ' + e;
+            }
+        }
+
+        // Fetch Logs
+        async function fetchLogs() {
+            const out = document.getElementById('logOutput');
+            out.innerText = 'Refreshing logs...';
+            try {
+                const res = await fetch('/cgi-bin/api.sh?action=get_log');
+                const r = await res.json();
+                out.innerText = (r.log || '').replace(/\|/g, '\n') || 'Log file is currently empty.';
+            } catch (e) {
+                out.innerText = 'Failed to load logs: ' + e;
+            }
+        }
+
+        // Reboot confirmation
+        document.getElementById('btnReboot').addEventListener('click', () => {
+            if (confirm('Reboot your Samsung Galaxy device now?')) {
+                fetch('/cgi-bin/api.sh?action=reboot');
+                showToast('Rebooting device...');
+            }
+        });
+
+        document.getElementById('btnRefresh').addEventListener('click', () => {
+            fetchState();
+            showToast('Refreshed live state');
+        });
+
+        // Initialize & poll
+        fetchState();
+        refreshTimer = setInterval(fetchState, 3500);
+    </script>
+</body>
+</html>
