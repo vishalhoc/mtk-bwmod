@@ -102,9 +102,7 @@ persist.vendor.wifi.roaming_diff=10
 persist.vendor.wifi.roaming_scanperiod=10
 persist.vendor.wifi.scan_disable_when_screen_off=1
 
-# Hotspot / SoftAP
-wifi.interface.softap.config=wlan0
-wifi.softap.interface=wlan0
+# Hotspot / SoftAP (Compatible with OneUI swlan0 & VirtualAP ap0)
 persist.vendor.wifi.softap.band=0
 persist.vendor.wifi.ap.bridge_mode=0
 persist.vendor.wifi.softap.sae=0

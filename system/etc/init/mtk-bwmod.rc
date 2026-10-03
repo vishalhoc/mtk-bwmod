@@ -44,8 +44,9 @@ on post-fs-data
     # IPv4 routing optimization
     write /proc/sys/net/ipv4/route/gc_timeout               100
     write /proc/sys/net/ipv4/route/min_adv_mss              1280
-    write /proc/sys/net/ipv4/conf/all/rp_filter             1
-    write /proc/sys/net/ipv4/conf/default/rp_filter         1
+    write /proc/sys/net/ipv4/conf/all/rp_filter             2
+    write /proc/sys/net/ipv4/conf/default/rp_filter         2
+    write /proc/sys/net/ipv4/ip_no_pmtu_disc                0
     write /proc/sys/net/ipv4/conf/all/accept_source_route   0
     write /proc/sys/net/ipv4/conf/all/accept_redirects      0
     write /proc/sys/net/ipv4/conf/all/send_redirects        0
@@ -56,11 +57,11 @@ on post-fs-data
 
 # ── LATE STAGE: boot_completed ────────────────────────────────────────────────
 # Runs after all modules and services loaded
-# BBR requires tcp_bbr kernel module, conntrack requires nf_conntrack
+# Uses high-speed BIC congestion control (optimized for MediaTek kernel)
 
 on property:sys.boot_completed=1
-    # BBR congestion control (requires tcp_bbr.ko loaded)
-    write /proc/sys/net/ipv4/tcp_congestion_control         bbr
+    # BIC / Cubic congestion control
+    write /proc/sys/net/ipv4/tcp_congestion_control         bic
 
     # TCP buffer sizes — 64MB for NR/5G
     write /proc/sys/net/core/rmem_max                       67108864

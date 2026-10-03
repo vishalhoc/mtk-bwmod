@@ -87,7 +87,8 @@ sysctl -w net.ipv4.tcp_fin_timeout=15               2>/dev/null
 sysctl -w net.ipv4.ip_local_port_range="1024 65535" 2>/dev/null
 sysctl -w net.core.netdev_max_backlog=16384          2>/dev/null
 sysctl -w net.core.somaxconn=8192                   2>/dev/null
-sysctl -w net.ipv4.tcp_congestion_control=bbr       2>/dev/null \
+sysctl -w net.ipv4.tcp_congestion_control=bic       2>/dev/null \
+  || sysctl -w net.ipv4.tcp_congestion_control=bbr 2>/dev/null \
   || sysctl -w net.ipv4.tcp_congestion_control=cubic 2>/dev/null
 CC=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
 log "[3] TCP tuning applied (cc=${CC})"
@@ -128,25 +129,27 @@ log "[6] DNS 1.1.1.1 applied on all interfaces"
 # =============================================================================
 # 7. NETWORK IRQ AFFINITY — bind to big cores for faster packet processing
 # =============================================================================
+# MT6853 Dimensity 720: Cores 6 & 7 are Cortex-A76 Big Cores (0xc0), Octa 4-7 (0xf0)
 case "$CPUS" in
   10) BIG_MASK="3c0" ;;   # Dimensity 10-core: cpu6-9
    8) BIG_MASK="f0"  ;;   # Octa-core: cpu4-7
    6) BIG_MASK="38"  ;;   # Hexa-core: cpu3-5
    *) BIG_MASK="06"  ;;   # Quad-core fallback: cpu1-2
 esac
+if [ "$CPUS" -eq 8 ] && [ -d /sys/devices/system/cpu/cpu7 ]; then
+  A76_MASK="c0"  # Dedicated Cortex-A76 big cores
+else
+  A76_MASK="$BIG_MASK"
+fi
 
 BOUND=0
-for irq_dir in /proc/irq/*/; do
-  name=$(cat "${irq_dir}actions" 2>/dev/null)
-  case "$name" in
-    *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|\
-    *mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*)
-      echo "$BIG_MASK" > "${irq_dir}smp_affinity" 2>/dev/null \
-        && BOUND=$((BOUND+1))
-      ;;
-  esac
+for irq in $(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print $1}' /proc/interrupts 2>/dev/null | tr -d ' '); do
+  if [ -f "/proc/irq/$irq/smp_affinity" ]; then
+    echo "$A76_MASK" > "/proc/irq/$irq/smp_affinity" 2>/dev/null \
+      && BOUND=$((BOUND+1))
+  fi
 done
-log "[7] IRQ affinity: ${BOUND} network IRQs → cpu mask 0x${BIG_MASK}"
+log "[7] IRQ affinity: ${BOUND} network IRQs → cpu mask 0x${A76_MASK}"
 
 # =============================================================================
 # 8. DATA STALL RECOVERY PROPS (runtime)
@@ -311,23 +314,21 @@ for IF in $(ip link show up 2>/dev/null \
     | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
     | grep -vE "^lo$|^dummy|^ip6tnl|^sit"); do
 
-  # Remove Android's default qdisc (pfifo_fast / fq_codel / sfq)
-  # Skip interface if in AP/hotspot mode (prevents hotspot breakage)
+  # Skip AP/hotspot mode interfaces
   AP_MODE=$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")
   [ "$AP_MODE" -gt "0" ] && continue
+  # Preserve multi-queue mq on cellular rmnet interfaces
+  [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
 
   tc qdisc del dev "$IF" root 2>/dev/null
-
-  # Apply fq (Fair Queue) — best pairing for BBR congestion control
-  # flows get individual pacing queues, no single stream can starve others
   tc qdisc add dev "$IF" root fq         2>/dev/null \
     || tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
     || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
 done
 
 # Verify
-APPLIED=$(tc qdisc show 2>/dev/null | grep -cE "fq |fq_codel")
-log "[14] tc qdisc → fq applied on ${APPLIED} interfaces"
+APPLIED=$(tc qdisc show 2>/dev/null | grep -cE "fq |fq_codel|pfifo_fast|mq")
+log "[14] tc qdisc active on ${APPLIED} interfaces"
 
 # =============================================================================
 # 15. HARDWARE OFFLOADING — GRO / GSO / TSO via sysfs + ethtool
@@ -477,22 +478,39 @@ MODDIR="${0%/*}"
 WEB_DIR="/data/local/mtk_bwmod/web"
 PORT=8096
 
+# Normalize any backslash filenames from Windows zip extraction
+mkdir -p "$MODDIR/web/cgi-bin" 2>/dev/null
+for f in "$MODDIR"/*; do
+  base=$(basename "$f")
+  case "$base" in
+    web\\index.html) mv "$f" "$MODDIR/web/index.html" 2>/dev/null ;;
+    web\\cgi-bin\\api.sh) mv "$f" "$MODDIR/web/cgi-bin/api.sh" 2>/dev/null ;;
+  esac
+done
+
+mkdir -p "$WEB_DIR/cgi-bin" 2>/dev/null
 if [ -d "$MODDIR/web" ]; then
-  mkdir -p "$WEB_DIR" 2>/dev/null
   cp -rf "$MODDIR/web/"* "$WEB_DIR/" 2>/dev/null
-  chmod -R 0755 "$WEB_DIR" 2>/dev/null
-  chmod 0755 "$WEB_DIR/cgi-bin/api.sh" 2>/dev/null
 fi
+chmod -R 0755 "$WEB_DIR" 2>/dev/null
+chmod 0755 "$WEB_DIR/cgi-bin/api.sh" 2>/dev/null
+
+# Loose reverse path filter for tethering/downstream compatibility
+sysctl -w net.ipv4.conf.all.rp_filter=2     2>/dev/null
+sysctl -w net.ipv4.conf.default.rp_filter=2 2>/dev/null
+sysctl -w net.ipv4.ip_no_pmtu_disc=0        2>/dev/null
 
 BUSYBOX=""
 for b in /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox $(which busybox 2>/dev/null); do
   if [ -x "$b" ]; then BUSYBOX="$b"; break; fi
 done
 
-if [ -n "$BUSYBOX" ] && [ -d "$WEB_DIR" ]; then
+if [ -n "$BUSYBOX" ] && [ -f "$WEB_DIR/index.html" ]; then
   pkill -f "httpd -p .*:$PORT" 2>/dev/null
   $BUSYBOX httpd -p 0.0.0.0:$PORT -h "$WEB_DIR"
   log "[23] Web Control Panel active on http://0.0.0.0:$PORT"
+else
+  log "[23] WARNING: httpd could not start, web files missing or busybox unavailable"
 fi
 
 # =============================================================================

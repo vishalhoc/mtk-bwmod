@@ -47,6 +47,15 @@ if [ -z "$ACTION" ]; then
     ACTION=$(get_post_param "action")
 fi
 
+# =============================================================================
+# ACTION: REBOOT
+# =============================================================================
+if [ "$ACTION" = "reboot" ]; then
+    printf "{\"success\":true,\"message\":\"Device rebooting now...\"}\n"
+    (sleep 1; /system/bin/reboot || svc power reboot || setprop sys.powerctl reboot) &
+    exit 0
+fi
+
 CPUS=$(nproc --all 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 8)
 case "$CPUS" in
     10) BIG_MASK="3c0" ;;
@@ -54,6 +63,11 @@ case "$CPUS" in
     6)  BIG_MASK="38"  ;;
     *)  BIG_MASK="06"  ;;
 esac
+if [ "$CPUS" -eq 8 ] && [ -d /sys/devices/system/cpu/cpu7 ]; then
+    A76_MASK="c0"  # Cores 6 & 7 (Cortex-A76 Big Cores on MT6853)
+else
+    A76_MASK="$BIG_MASK"
+fi
 HALF=$((CPUS / 2))
 
 # =============================================================================
@@ -64,8 +78,8 @@ apply_performance() {
     sysctl -w net.core.wmem_max=67108864                     2>/dev/null
     sysctl -w net.ipv4.tcp_rmem="4096 1048576 67108864"      2>/dev/null
     sysctl -w net.ipv4.tcp_wmem="4096 1048576 67108864"      2>/dev/null
-    sysctl -w net.ipv4.tcp_congestion_control=bbr            2>/dev/null \
-      || sysctl -w net.ipv4.tcp_congestion_control=bic       2>/dev/null \
+    sysctl -w net.ipv4.tcp_congestion_control=bic            2>/dev/null \
+      || sysctl -w net.ipv4.tcp_congestion_control=bbr       2>/dev/null \
       || sysctl -w net.ipv4.tcp_congestion_control=cubic     2>/dev/null
     sysctl -w net.ipv4.tcp_fastopen=3                        2>/dev/null
     sysctl -w net.ipv4.tcp_timestamps=0                      2>/dev/null
@@ -78,15 +92,17 @@ apply_performance() {
     sysctl -w net.core.rps_sock_flow_entries=32768           2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_max=2000000         2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600 2>/dev/null
+    sysctl -w net.ipv4.conf.all.rp_filter=2                  2>/dev/null
+    sysctl -w net.ipv4.conf.default.rp_filter=2              2>/dev/null
+    sysctl -w net.ipv4.ip_no_pmtu_disc=0                     2>/dev/null
 
     for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
         [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+        [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
         tc qdisc del dev "$IF" root 2>/dev/null
         tc qdisc add dev "$IF" root fq 2>/dev/null \
           || tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
           || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
-        ethtool -C "$IF" rx-usecs 50 tx-usecs 50 rx-frames 32 2>/dev/null
-        ethtool -K "$IF" gro on gso on tso on 2>/dev/null
         ip link set "$IF" txqueuelen 3000 2>/dev/null
     done
 
@@ -97,14 +113,9 @@ apply_performance() {
         echo 500 > "${DIR}down_rate_limit_us" 2>/dev/null
     done
 
-    # IRQ affinity to big cores
-    for irq_dir in /proc/irq/*/; do
-        name=$(cat "${irq_dir}actions" 2>/dev/null)
-        case "$name" in
-            *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|*mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*)
-                echo "$BIG_MASK" > "${irq_dir}smp_affinity" 2>/dev/null
-                ;;
-        esac
+    # IRQ affinity to big cores (parse /proc/interrupts directly)
+    for irq in $(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print $1}' /proc/interrupts 2>/dev/null | tr -d ' '); do
+        [ -f "/proc/irq/$irq/smp_affinity" ] && echo "$A76_MASK" > "/proc/irq/$irq/smp_affinity" 2>/dev/null
     done
 
     setprop persist.sys.wifi.power_save false
@@ -119,8 +130,7 @@ apply_balanced() {
     sysctl -w net.core.wmem_max=33554432                     2>/dev/null
     sysctl -w net.ipv4.tcp_rmem="4096 524288 33554432"       2>/dev/null
     sysctl -w net.ipv4.tcp_wmem="4096 524288 33554432"       2>/dev/null
-    sysctl -w net.ipv4.tcp_congestion_control=bbr            2>/dev/null \
-      || sysctl -w net.ipv4.tcp_congestion_control=bic       2>/dev/null \
+    sysctl -w net.ipv4.tcp_congestion_control=bic            2>/dev/null \
       || sysctl -w net.ipv4.tcp_congestion_control=cubic     2>/dev/null
     sysctl -w net.ipv4.tcp_timestamps=1                      2>/dev/null
     sysctl -w net.ipv4.tcp_mtu_probing=1                     2>/dev/null
@@ -130,13 +140,16 @@ apply_balanced() {
     sysctl -w net.core.netdev_max_backlog=16384              2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_max=500000          2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=1200 2>/dev/null
+    sysctl -w net.ipv4.conf.all.rp_filter=2                  2>/dev/null
+    sysctl -w net.ipv4.conf.default.rp_filter=2              2>/dev/null
+    sysctl -w net.ipv4.ip_no_pmtu_disc=0                     2>/dev/null
 
     for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
         [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+        [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
         tc qdisc del dev "$IF" root 2>/dev/null
         tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
           || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
-        ethtool -C "$IF" rx-usecs 100 tx-usecs 100 rx-frames 16 2>/dev/null
         ip link set "$IF" txqueuelen 2000 2>/dev/null
     done
 
@@ -169,13 +182,15 @@ apply_battery() {
     sysctl -w net.core.netdev_max_backlog=8192               2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_max=65536           2>/dev/null
     sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=432000 2>/dev/null
+    sysctl -w net.ipv4.conf.all.rp_filter=2                  2>/dev/null
+    sysctl -w net.ipv4.conf.default.rp_filter=2              2>/dev/null
 
     for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
         [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+        [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
         tc qdisc del dev "$IF" root 2>/dev/null
         tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
           || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
-        ethtool -C "$IF" rx-usecs 200 tx-usecs 200 rx-frames 8 2>/dev/null
         ip link set "$IF" txqueuelen 1000 2>/dev/null
     done
 
@@ -350,10 +365,11 @@ if [ "$ACTION" = "save_custom" ]; then
     if [ -n "$QDISC" ]; then
         for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
             [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+            [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
             tc qdisc del dev "$IF" root 2>/dev/null
             tc qdisc add dev "$IF" root "$QDISC" 2>/dev/null
         done
-        echo "for IF in \$(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,\"\",\$2);print \$2}' | grep -vE \"^lo$|^dummy|^ip6\"); do [ \"\$(iw dev \"\$IF\" info 2>/dev/null | grep -c \"type AP\")\" -gt \"0\" ] && continue; tc qdisc del dev \"\$IF\" root 2>/dev/null; tc qdisc add dev \"\$IF\" root $QDISC 2>/dev/null; done" >> "$CUSTOM_SH"
+        echo "for IF in \$(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,\"\",\$2);print \$2}' | grep -vE \"^lo$|^dummy|^ip6\"); do [ \"\$(iw dev \"\$IF\" info 2>/dev/null | grep -c \"type AP\")\" -gt \"0\" ] && continue; [ \"\$(tc qdisc show dev \"\$IF\" 2>/dev/null | grep -c \"qdisc mq\")\" -gt \"0\" ] && continue; tc qdisc del dev \"\$IF\" root 2>/dev/null; tc qdisc add dev \"\$IF\" root $QDISC 2>/dev/null; done" >> "$CUSTOM_SH"
     fi
 
     # HW Offload
@@ -377,15 +393,10 @@ if [ "$ACTION" = "save_custom" ]; then
     # 4. IRQ Affinity & Schedutil
     AFF_MASK=$(get_post_param "cpu_affinity_mask")
     if [ -n "$AFF_MASK" ]; then
-        for irq_dir in /proc/irq/*/; do
-            name=$(cat "${irq_dir}actions" 2>/dev/null)
-            case "$name" in
-                *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|*mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*)
-                    echo "$AFF_MASK" > "${irq_dir}smp_affinity" 2>/dev/null
-                    ;;
-            esac
+        for irq in $(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print $1}' /proc/interrupts 2>/dev/null | tr -d ' '); do
+            [ -f "/proc/irq/$irq/smp_affinity" ] && echo "$AFF_MASK" > "/proc/irq/$irq/smp_affinity" 2>/dev/null
         done
-        echo "for irq_dir in /proc/irq/*/; do name=\$(cat \"\${irq_dir}actions\" 2>/dev/null); case \"\$name\" in *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|*mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*) echo \"$AFF_MASK\" > \"\${irq_dir}smp_affinity\" 2>/dev/null ;; esac; done" >> "$CUSTOM_SH"
+        echo "for irq in \$(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print \$1}' /proc/interrupts 2>/dev/null | tr -d ' '); do [ -f \"/proc/irq/\$irq/smp_affinity\" ] && echo \"$AFF_MASK\" > \"/proc/irq/\$irq/smp_affinity\" 2>/dev/null; done" >> "$CUSTOM_SH"
     fi
 
     UP_RATE=$(get_post_param "schedutil_up_rate_limit_us")
@@ -595,6 +606,14 @@ BRAND=$(getprop ro.product.brand 2>/dev/null || echo "Unknown")
 SOC=$(getprop ro.vendor.mediatek.platform 2>/dev/null)
 [ -z "$SOC" ] && SOC=$(getprop ro.soc.model 2>/dev/null)
 [ -z "$SOC" ] && SOC=$(getprop ro.board.platform 2>/dev/null || echo "MT6853")
+case "$SOC" in
+    *6853*|*MT6853*) SOC_NAME="Dimensity 720 ($SOC)" ;;
+    *6877*|*MT6877*) SOC_NAME="Dimensity 900 ($SOC)" ;;
+    *6833*|*MT6833*) SOC_NAME="Dimensity 700 ($SOC)" ;;
+    *6893*|*MT6893*) SOC_NAME="Dimensity 1200 ($SOC)" ;;
+    *6983*|*MT6983*) SOC_NAME="Dimensity 9000 ($SOC)" ;;
+    *) SOC_NAME="$SOC" ;;
+esac
 ANDROID=$(getprop ro.build.version.release 2>/dev/null || echo "13")
 UPTIME=$(num "$(awk '{print int($1)}' /proc/uptime 2>/dev/null)")
 MEM_TOTAL=$(num "$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')")
@@ -643,7 +662,7 @@ UP_RATE=$(num "$(cat "/sys/devices/system/cpu/cpu${HALF}/cpufreq/schedutil/up_ra
 DOWN_RATE=$(num "$(cat "/sys/devices/system/cpu/cpu${HALF}/cpufreq/schedutil/down_rate_limit_us" 2>/dev/null)")
 
 # Fast single-process IRQ Count
-IRQ_COUNT=$(num "$(cat /proc/irq/*/actions 2>/dev/null | grep -ciE "wlan|wifi|mt76|connsys|wcn|mtk_.*net|rmnet|ccmni|modem|ccci" 2>/dev/null)")
+IRQ_COUNT=$(num "$(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print $1}' /proc/interrupts 2>/dev/null | wc -l)")
 
 # Radio & Cellular Props
 NR_EN=$(getprop persist.vendor.radio.nr.enabled 2>/dev/null || echo "0")
@@ -699,10 +718,10 @@ cat <<EOF
   "device": {
     "model": "$MODEL",
     "brand": "$BRAND",
-    "soc": "$SOC",
+    "soc": "$SOC_NAME",
     "android": "$ANDROID",
     "cpus": $CPUS,
-    "big_mask": "$BIG_MASK",
+    "big_mask": "$A76_MASK",
     "ram_total_kb": $MEM_TOTAL,
     "ram_free_kb": $MEM_FREE,
     "uptime_secs": $UPTIME
@@ -751,7 +770,7 @@ cat <<EOF
   },
   "irq": {
     "count": $IRQ_COUNT,
-    "mask": "$BIG_MASK"
+    "mask": "$A76_MASK"
   },
   "radio": {
     "nr_enabled": "$NR_EN",

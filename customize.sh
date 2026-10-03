@@ -65,6 +65,19 @@ ui_print ""
 
 unzip -o "$ZIPFILE" -x 'META-INF/*' -d "$MODPATH" >&2
 
+# Normalize any backslash filenames extracted by Windows zip tools
+mkdir -p "$MODPATH/web/cgi-bin" "$MODPATH/system/etc/init" "$MODPATH/system/etc/sysctl.d" 2>/dev/null
+for f in "$MODPATH"/*; do
+    base=$(basename "$f")
+    case "$base" in
+        web\\index.html) mv "$f" "$MODPATH/web/index.html" 2>/dev/null ;;
+        web\\cgi-bin\\api.sh) mv "$f" "$MODPATH/web/cgi-bin/api.sh" 2>/dev/null ;;
+        portfolio\\index.html) mkdir -p "$MODPATH/portfolio"; mv "$f" "$MODPATH/portfolio/index.html" 2>/dev/null ;;
+        system\\etc\\init\\mtk-bwmod.rc) mv "$f" "$MODPATH/system/etc/init/mtk-bwmod.rc" 2>/dev/null ;;
+        system\\etc\\sysctl.d\\99-mtk-bwmod.conf) mv "$f" "$MODPATH/system/etc/sysctl.d/99-mtk-bwmod.conf" 2>/dev/null ;;
+    esac
+done
+
 set_perm_recursive "$MODPATH" root root 0755 0644
 set_perm "$MODPATH/service.sh" root root 0755
 set_perm "$MODPATH/post-fs-data.sh" root root 0755
@@ -78,7 +91,7 @@ set_perm "$MODPATH/web/cgi-bin/api.sh" root root 0755
 [ ! -f /data/local/tmp/mtk_bwmod_profile ] && echo "performance" > /data/local/tmp/mtk_bwmod_profile
 
 # Pre-deploy web UI
-mkdir -p /data/local/mtk_bwmod/web 2>/dev/null
+mkdir -p /data/local/mtk_bwmod/web/cgi-bin 2>/dev/null
 cp -rf "$MODPATH/web/"* /data/local/mtk_bwmod/web/ 2>/dev/null
 chmod -R 0755 /data/local/mtk_bwmod/web 2>/dev/null
 chmod 0755 /data/local/mtk_bwmod/web/cgi-bin/api.sh 2>/dev/null
@@ -91,7 +104,7 @@ ui_print "  ✓  web/         (Web Control Panel on port 8096)"
 ui_print "  ✓  action.sh    (Action Button & Profile Switcher)"
 ui_print ""
 ui_print "  Control Panel:"
-ui_print "   http://localhost:8096"
+ui_print "   http://127.0.0.1:8096"
 ui_print "   Tap 'Action' button in Magisk to open instantly"
 ui_print ""
 ui_print "  Log: /data/local/tmp/mtk_bwmod.log"

@@ -1,5 +1,20 @@
 # MTK Extreme Bandwidth Mod Changelog
 
+## v3.1 - Samsung Galaxy & Dimensity Compatibility, Web 404 Fix & IRQ Affinity
+- **Web Control Panel 404 & Launch Fixes**:
+  - Resolved HTTP 404 on port 8096 caused by Windows backslash packaging creating flat files instead of Linux directories. Added automated self-healing folder normalization across all installer and runtime scripts (`customize.sh`, `service.sh`, `action.sh`).
+  - Switched browser launch intents to `http://127.0.0.1:8096` to avoid IPv6 `::1` or web search fallbacks in Android 13 Samsung Internet / Chrome.
+- **MediaTek Dimensity 720 (MT6853) & 2+6 Core Topology Steering**:
+  - Implemented Cortex-A76 Big Core IRQ affinity steering (`0xc0` for cores 6-7, `0xf0` for cores 4-7) for instantaneous network packet interrupt handling.
+  - Fixed IRQ parsing to inspect `/proc/interrupts` directly instead of missing kernel `/actions` nodes, binding all primary network hardware IRQs (`wlan0`, `musb-hdrc`, `MD_WDT`, `mtk_cmdq`).
+  - Added dedicated SoC detection mapping `Dimensity 720 (MT6853)`.
+- **TCP & Network Queue Discipline Compatibility**:
+  - Set `bic` (BIC-TCP) as primary performance algorithm for Samsung kernels where BBR is absent, delivering peak throughput on high-BDP 5G and Wi-Fi 5 links.
+  - Preserved root `mq` (multi-queue) qdisc on cellular `rmnet*` interfaces, preventing packet stall while applying `pfifo_fast` across non-cellular interfaces.
+- **OneUI Hotspot & Asymmetric Routing Stability**:
+  - Removed restrictive `wifi.softap.interface` override to preserve Samsung OneUI native hotspot interfaces (`swlan0`, `ap0`).
+  - Configured loose reverse path filtering (`rp_filter=2`) and enabled Path MTU Discovery (`ip_no_pmtu_disc=0`) to eliminate packet dropping during mobile data tethering.
+
 ## v3.0 - Web Control Panel, Live Telemetry & Full Parameter Tuner
 - **Interactive Web Control Panel**:
   - Embedded BusyBox `httpd` daemon on port `8096` (`http://localhost:8096`).

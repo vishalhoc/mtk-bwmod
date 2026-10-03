@@ -40,6 +40,9 @@ echo 0 > /proc/sys/net/ipv4/conf/all/accept_source_route
 echo 0 > /proc/sys/net/ipv4/conf/default/accept_source_route
 echo 1 > /proc/sys/net/ipv4/conf/all/arp_announce
 echo 2 > /proc/sys/net/ipv4/conf/all/arp_filter    2>/dev/null
+# Loose reverse path filtering (2) prevents dropping valid tethered & asymmetric mobile packets
+echo 2 > /proc/sys/net/ipv4/conf/all/rp_filter     2>/dev/null
+echo 2 > /proc/sys/net/ipv4/conf/default/rp_filter 2>/dev/null
 
 # ── 4. IPV6 OPTIMIZATION ──────────────────────────────────────────────────────
 # Increase IPv6 neighbor table (critical for IPv6-only LTE/5G APNs)
@@ -71,7 +74,7 @@ echo 32768 > /proc/sys/net/core/netdev_max_backlog
 echo 32768 > /proc/sys/net/core/rps_sock_flow_entries  2>/dev/null
 
 # ── 8. MTK CCCI / MODEM INTERFACE HINTS ──────────────────────────────────────
-# Prefer full fragmentation on rmnet (modem handles reassembly in hardware)
-echo 1 > /proc/sys/net/ipv4/ip_no_pmtu_disc 2>/dev/null
+# Path MTU Discovery enabled (0) to prevent packet drops across LTE/5G tunnels
+echo 0 > /proc/sys/net/ipv4/ip_no_pmtu_disc 2>/dev/null
 
 log "post-fs-data complete — $(date '+%H:%M:%S')"

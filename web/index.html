@@ -703,8 +703,8 @@
         <div class="header-brand">
             <div class="logo-icon">⚡</div>
             <div class="header-titles">
-                <h1>MTK BWMod <span class="version-badge">v3.0</span></h1>
-                <div class="header-sub">MediaTek Extreme Bandwidth Optimizer · by hoc</div>
+                <h1>MTK BWMod <span class="version-badge">v3.1</span></h1>
+                <div class="header-sub">MediaTek Dimensity 720 (MT6853) Extreme Bandwidth Optimizer · by hoc</div>
             </div>
         </div>
         <div class="header-actions">
@@ -744,12 +744,12 @@
                 <!-- PERFORMANCE CARD -->
                 <div class="card profile-card" id="card-performance" onclick="selectProfile('performance')">
                     <h3>⚡ Extreme Performance</h3>
-                    <div class="profile-desc">Maximum network throughput, lowest latency, 64MB buffers, BBR/fq, and instant CPU burst response.</div>
+                    <div class="profile-desc">Maximum network throughput, lowest latency, 64MB buffers, BIC-TCP, and instant Cortex-A76 CPU burst response.</div>
                     <ul class="profile-specs">
                         <li>TCP Buffers: <b>64 MB</b></li>
-                        <li>Congestion Ctrl: <b>BBR / BIC</b></li>
-                        <li>Queue Disc (qdisc): <b>fq (Fair Queue)</b></li>
-                        <li>Schedutil Burst: <b>0 µs (Instant)</b></li>
+                        <li>Congestion Ctrl: <b>BIC (Peak) / CUBIC</b></li>
+                        <li>Queue Disc (qdisc): <b>pfifo_fast / mq (rmnet)</b></li>
+                        <li>Schedutil Burst: <b>0 µs (Cortex-A76)</b></li>
                         <li>NAPI Budget: <b>600 packets</b></li>
                         <li>Conntrack Table: <b>2,000,000</b></li>
                         <li>Wi-Fi Power Save: <b>OFF</b></li>
@@ -761,11 +761,11 @@
                 <!-- BALANCED CARD -->
                 <div class="card profile-card" id="card-balanced" onclick="selectProfile('balanced')">
                     <h3>⚖️ Balanced</h3>
-                    <div class="profile-desc">Optimal blend of high bandwidth, battery efficiency, and standard queue management for daily use.</div>
+                    <div class="profile-desc">Optimal blend of high bandwidth, battery efficiency, and native queue management for daily use.</div>
                     <ul class="profile-specs">
                         <li>TCP Buffers: <b>32 MB</b></li>
-                        <li>Congestion Ctrl: <b>BBR / Cubic</b></li>
-                        <li>Queue Disc (qdisc): <b>fq_codel</b></li>
+                        <li>Congestion Ctrl: <b>BIC / Cubic</b></li>
+                        <li>Queue Disc (qdisc): <b>pfifo_fast / mq</b></li>
                         <li>Schedutil Burst: <b>200 µs</b></li>
                         <li>NAPI Budget: <b>400 packets</b></li>
                         <li>Conntrack Table: <b>500,000</b></li>
@@ -782,7 +782,7 @@
                     <ul class="profile-specs">
                         <li>TCP Buffers: <b>16 MB</b></li>
                         <li>Congestion Ctrl: <b>Cubic</b></li>
-                        <li>Queue Disc (qdisc): <b>fq_codel</b></li>
+                        <li>Queue Disc (qdisc): <b>pfifo_fast / mq</b></li>
                         <li>Schedutil Burst: <b>500 µs</b></li>
                         <li>NAPI Budget: <b>300 packets</b></li>
                         <li>Conntrack Table: <b>65,536</b></li>
@@ -832,20 +832,20 @@
                             </tr>
                             <tr>
                                 <td>Congestion Algorithm</td>
-                                <td><b>BBR / BIC</b></td>
-                                <td><b>BBR / Cubic</b></td>
+                                <td><b>BIC (Peak)</b></td>
+                                <td><b>BIC / Cubic</b></td>
                                 <td><b>Cubic</b></td>
                             </tr>
                             <tr>
                                 <td>Packet Queue Disc</td>
-                                <td><b>fq (Fair Queue)</b></td>
-                                <td><b>fq_codel</b></td>
-                                <td><b>fq_codel</b></td>
+                                <td><b>pfifo_fast / mq</b></td>
+                                <td><b>pfifo_fast / mq</b></td>
+                                <td><b>pfifo_fast / mq</b></td>
                             </tr>
                             <tr>
                                 <td>Big Core Schedutil Up Rate</td>
-                                <td><b>0 µs (Instant)</b></td>
-                                <td><b>200 µs</b></td>
+                                <td><b>0 µs (Cortex-A76)</b></td>
+                                <td><b>200 µs (Cortex-A76)</b></td>
                                 <td><b>500 µs</b></td>
                             </tr>
                             <tr>
@@ -917,7 +917,7 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">CPU Schedutil Big-Core Response</div>
-                        <span class="badge badge-cyan">Big Cores</span>
+                        <span class="badge badge-cyan">Cortex-A76 Big Cores</span>
                     </div>
                     <div style="display:flex; justify-content:space-around; margin:15px 0;">
                         <div style="text-align:center;">
@@ -934,10 +934,10 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">Network IRQ Affinity</div>
-                        <span class="badge badge-green">Mask 0x<span id="telIrqMask">f0</span></span>
+                        <span class="badge badge-green">Mask 0x<span id="telIrqMask">c0</span> (A76 Cores 6-7)</span>
                     </div>
                     <div class="metric-value" id="telIrqCount">0</div>
-                    <div class="metric-sub">Network IRQs steered to high-performance cores</div>
+                    <div class="metric-sub">Network IRQs steered to Cortex-A76 Big Cores</div>
                 </div>
             </div>
 
@@ -999,10 +999,10 @@
                         </div>
                         <div class="form-control-wrap">
                             <select id="opt_tcp_cc" name="tcp_congestion_control">
-                                <option value="bbr">bbr</option>
-                                <option value="bic">bic</option>
-                                <option value="cubic">cubic</option>
-                                <option value="reno">reno</option>
+                                <option value="bic">bic (Recommended on Dimensity 720 / MT6853)</option>
+                                <option value="cubic">cubic (Kernel standard)</option>
+                                <option value="reno">reno (Fallback)</option>
+                                <option value="bbr">bbr (If kernel compiled)</option>
                             </select>
                         </div>
                     </div>
@@ -1210,9 +1210,9 @@
                         </div>
                         <div class="form-control-wrap">
                             <select id="opt_qdisc" name="qdisc_type">
-                                <option value="fq">fq (Fair Queue - Best with BBR)</option>
-                                <option value="fq_codel">fq_codel (CoDel Bufferbloat killer)</option>
-                                <option value="pfifo_fast">pfifo_fast (Kernel default)</option>
+                                <option value="pfifo_fast">pfifo_fast (Kernel Native - Best Stability)</option>
+                                <option value="fq_codel">fq_codel (Bufferbloat reduction)</option>
+                                <option value="fq">fq (Fair Queue)</option>
                             </select>
                         </div>
                     </div>
@@ -1235,10 +1235,12 @@
                     <div class="form-row">
                         <div class="form-label">
                             <div class="form-label-title">Big Core CPU Affinity Mask</div>
-                            <div class="form-label-desc">SMP affinity mask for network IRQs (Hex: f0 = Octa-core Big)</div>
+                            <div class="form-label-desc">SMP affinity mask for network IRQs (c0 = Cortex-A76 Cores 6-7, f0 = Cores 4-7)</div>
                         </div>
                         <div class="form-control-wrap">
-                            <input type="text" id="opt_aff_mask" name="cpu_affinity_mask" style="width:90px;">
+                            <span class="preset-chip" onclick="setVal('opt_aff_mask', 'c0')">c0 (A76 Cores 6-7)</span>
+                            <span class="preset-chip" onclick="setVal('opt_aff_mask', 'f0')">f0 (Cores 4-7)</span>
+                            <input type="text" id="opt_aff_mask" name="cpu_affinity_mask" style="width:70px;">
                         </div>
                     </div>
 
@@ -1869,6 +1871,7 @@
         // Load Preset into Editor
         function loadProfilePreset(name) {
             if (name === 'performance') {
+                setVal('opt_tcp_cc', 'bic');
                 setVal('opt_rmem_max', 67108864);
                 setVal('opt_wmem_max', 67108864);
                 setVal('opt_tcp_rmem', '4096 1048576 67108864');
@@ -1879,12 +1882,14 @@
                 setVal('opt_sched_up', 0);
                 setVal('opt_sched_down', 500);
                 setVal('opt_txqueuelen', 3000);
-                setVal('opt_qdisc', 'fq');
+                setVal('opt_qdisc', 'pfifo_fast');
+                setVal('opt_aff_mask', 'c0');
                 document.getElementById('opt_tcp_ts').checked = false;
                 document.getElementById('opt_wifi_ps').checked = false;
                 document.getElementById('opt_radio_fd').checked = true;
                 showToast('⚡ Performance preset loaded into editor');
             } else if (name === 'balanced') {
+                setVal('opt_tcp_cc', 'bic');
                 setVal('opt_rmem_max', 33554432);
                 setVal('opt_wmem_max', 33554432);
                 setVal('opt_tcp_rmem', '4096 524288 33554432');
@@ -1895,7 +1900,8 @@
                 setVal('opt_sched_up', 200);
                 setVal('opt_sched_down', 1000);
                 setVal('opt_txqueuelen', 2000);
-                setVal('opt_qdisc', 'fq_codel');
+                setVal('opt_qdisc', 'pfifo_fast');
+                setVal('opt_aff_mask', 'c0');
                 document.getElementById('opt_tcp_ts').checked = true;
                 document.getElementById('opt_wifi_ps').checked = false;
                 document.getElementById('opt_radio_fd').checked = false;

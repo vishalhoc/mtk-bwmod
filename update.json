@@ -1,6 +1,6 @@
 {
-  "version": "v3.0",
-  "versionCode": 300,
-  "zipUrl": "https://github.com/vishalhoc/mtk-bwmod/releases/download/v3.0/mtk_bwmod-v3.0.zip",
+  "version": "v3.1",
+  "versionCode": 310,
+  "zipUrl": "https://github.com/vishalhoc/mtk-bwmod/releases/download/v3.1/mtk_bwmod-v3.1.zip",
   "changelog": "https://raw.githubusercontent.com/vishalhoc/mtk-bwmod/main/CHANGELOG.md"
 }

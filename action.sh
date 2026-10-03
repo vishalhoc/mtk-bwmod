@@ -22,23 +22,38 @@ case "$CPUS" in
    6) BIG_MASK="38"  ;;
    *) BIG_MASK="06"  ;;
 esac
+if [ "$CPUS" -eq 8 ] && [ -d /sys/devices/system/cpu/cpu7 ]; then
+  A76_MASK="c0"  # Cores 6 & 7 (Cortex-A76 Big Cores on MT6853)
+else
+  A76_MASK="$BIG_MASK"
+fi
 HALF=$((CPUS / 2))
 
 # ── 1. SYNC & ENSURE WEB SERVER IS RUNNING ──────────────────────────────────
+# Normalize any backslash filenames from Windows zip extraction
+mkdir -p "$MODDIR/web/cgi-bin" 2>/dev/null
+for f in "$MODDIR"/*; do
+  base=$(basename "$f")
+  case "$base" in
+    web\\index.html) mv "$f" "$MODDIR/web/index.html" 2>/dev/null ;;
+    web\\cgi-bin\\api.sh) mv "$f" "$MODDIR/web/cgi-bin/api.sh" 2>/dev/null ;;
+  esac
+done
+
+mkdir -p "$WEB_DIR/cgi-bin" 2>/dev/null
+if [ -d "$MODDIR/web" ]; then
+  cp -rf "$MODDIR/web/"* "$WEB_DIR/" 2>/dev/null
+fi
+chmod -R 0755 "$WEB_DIR" 2>/dev/null
+chmod 0755 "$WEB_DIR/cgi-bin/api.sh" 2>/dev/null
+
 BUSYBOX=""
 for b in /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox $(which busybox 2>/dev/null); do
   if [ -x "$b" ]; then BUSYBOX="$b"; break; fi
 done
 
-if [ -d "$MODDIR/web" ]; then
-  mkdir -p "$WEB_DIR" 2>/dev/null
-  cp -rf "$MODDIR/web/"* "$WEB_DIR/" 2>/dev/null
-  chmod -R 0755 "$WEB_DIR" 2>/dev/null
-  chmod 0755 "$WEB_DIR/cgi-bin/api.sh" 2>/dev/null
-fi
-
 if ! pgrep -f "httpd -p .*:$PORT" >/dev/null 2>&1; then
-  if [ -n "$BUSYBOX" ] && [ -d "$WEB_DIR" ]; then
+  if [ -n "$BUSYBOX" ] && [ -f "$WEB_DIR/index.html" ]; then
     $BUSYBOX httpd -p 0.0.0.0:$PORT -h "$WEB_DIR"
     log "Started httpd on port $PORT"
   fi
@@ -50,8 +65,8 @@ apply_performance() {
   sysctl -w net.core.wmem_max=67108864                     2>/dev/null
   sysctl -w net.ipv4.tcp_rmem="4096 1048576 67108864"      2>/dev/null
   sysctl -w net.ipv4.tcp_wmem="4096 1048576 67108864"      2>/dev/null
-  sysctl -w net.ipv4.tcp_congestion_control=bbr            2>/dev/null \
-    || sysctl -w net.ipv4.tcp_congestion_control=bic       2>/dev/null \
+  sysctl -w net.ipv4.tcp_congestion_control=bic            2>/dev/null \
+    || sysctl -w net.ipv4.tcp_congestion_control=bbr       2>/dev/null \
     || sysctl -w net.ipv4.tcp_congestion_control=cubic     2>/dev/null
   sysctl -w net.ipv4.tcp_fastopen=3                        2>/dev/null
   sysctl -w net.ipv4.tcp_timestamps=0                      2>/dev/null
@@ -65,10 +80,11 @@ apply_performance() {
   sysctl -w net.netfilter.nf_conntrack_max=2000000         2>/dev/null
   for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
     [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+    [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
     tc qdisc del dev "$IF" root 2>/dev/null
     tc qdisc add dev "$IF" root fq 2>/dev/null \
-      || tc qdisc add dev "$IF" root fq_codel 2>/dev/null
-    ethtool -C "$IF" rx-usecs 50 tx-usecs 50 rx-frames 32 2>/dev/null
+      || tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
+      || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
     ip link set "$IF" txqueuelen 3000 2>/dev/null
   done
   for DIR in /sys/devices/system/cpu/cpu*/cpufreq/schedutil/; do
@@ -76,6 +92,10 @@ apply_performance() {
     [ "$N" -ge "$HALF" ] 2>/dev/null || continue
     echo 0   > "${DIR}up_rate_limit_us"   2>/dev/null
     echo 500 > "${DIR}down_rate_limit_us" 2>/dev/null
+  done
+  # Steer network interrupts to Cortex-A76 Big Cores
+  for irq in $(awk -F: '/wlan|wifi|musb|ccci|rmnet|conn|MD_|mtk_cmdq/ {print $1}' /proc/interrupts 2>/dev/null | tr -d ' '); do
+    [ -f "/proc/irq/$irq/smp_affinity" ] && echo "$A76_MASK" > "/proc/irq/$irq/smp_affinity" 2>/dev/null
   done
   setprop persist.sys.wifi.power_save false
   setprop wifi.ps.mode 0
@@ -88,8 +108,7 @@ apply_balanced() {
   sysctl -w net.core.wmem_max=33554432                     2>/dev/null
   sysctl -w net.ipv4.tcp_rmem="4096 524288 33554432"       2>/dev/null
   sysctl -w net.ipv4.tcp_wmem="4096 524288 33554432"       2>/dev/null
-  sysctl -w net.ipv4.tcp_congestion_control=bbr            2>/dev/null \
-    || sysctl -w net.ipv4.tcp_congestion_control=bic       2>/dev/null \
+  sysctl -w net.ipv4.tcp_congestion_control=bic            2>/dev/null \
     || sysctl -w net.ipv4.tcp_congestion_control=cubic     2>/dev/null
   sysctl -w net.ipv4.tcp_timestamps=1                      2>/dev/null
   sysctl -w net.ipv4.tcp_mtu_probing=1                     2>/dev/null
@@ -99,9 +118,10 @@ apply_balanced() {
   sysctl -w net.netfilter.nf_conntrack_max=500000          2>/dev/null
   for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
     [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+    [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
     tc qdisc del dev "$IF" root 2>/dev/null
-    tc qdisc add dev "$IF" root fq_codel 2>/dev/null
-    ethtool -C "$IF" rx-usecs 100 tx-usecs 100 rx-frames 16 2>/dev/null
+    tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
+      || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
     ip link set "$IF" txqueuelen 2000 2>/dev/null
   done
   for DIR in /sys/devices/system/cpu/cpu*/cpufreq/schedutil/; do
@@ -121,7 +141,8 @@ apply_battery() {
   sysctl -w net.core.wmem_max=16777216                     2>/dev/null
   sysctl -w net.ipv4.tcp_rmem="4096 262144 16777216"       2>/dev/null
   sysctl -w net.ipv4.tcp_wmem="4096 262144 16777216"       2>/dev/null
-  sysctl -w net.ipv4.tcp_congestion_control=cubic          2>/dev/null
+  sysctl -w net.ipv4.tcp_congestion_control=cubic          2>/dev/null \
+    || sysctl -w net.ipv4.tcp_congestion_control=reno      2>/dev/null
   sysctl -w net.ipv4.tcp_timestamps=1                      2>/dev/null
   sysctl -w net.ipv4.tcp_mtu_probing=0                     2>/dev/null
   sysctl -w net.ipv4.tcp_slow_start_after_idle=1           2>/dev/null
@@ -130,9 +151,10 @@ apply_battery() {
   sysctl -w net.netfilter.nf_conntrack_max=65536           2>/dev/null
   for IF in $(ip -o link show up 2>/dev/null | awk -F': ' '{gsub(/@.*/,"",$2);print $2}' | grep -vE "^lo$|^dummy|^ip6"); do
     [ "$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")" -gt "0" ] && continue
+    [ "$(tc qdisc show dev "$IF" 2>/dev/null | grep -c "qdisc mq")" -gt "0" ] && continue
     tc qdisc del dev "$IF" root 2>/dev/null
-    tc qdisc add dev "$IF" root fq_codel 2>/dev/null
-    ethtool -C "$IF" rx-usecs 200 tx-usecs 200 rx-frames 8 2>/dev/null
+    tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
+      || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
     ip link set "$IF" txqueuelen 1000 2>/dev/null
   done
   for DIR in /sys/devices/system/cpu/cpu*/cpufreq/schedutil/; do
@@ -157,19 +179,19 @@ if [ "$1" = "apply" ] && [ -n "$2" ]; then
 fi
 
 # ── 3. LAUNCH BROWSER INTENT ────────────────────────────────────────────────
-am start -a android.intent.action.VIEW -d "http://localhost:$PORT" >/dev/null 2>&1
+am start -a android.intent.action.VIEW -d "http://127.0.0.1:$PORT" >/dev/null 2>&1
 
 CURRENT=$(cat "$PROFILE_FILE" 2>/dev/null || echo "performance")
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  MTK Extreme Bandwidth Mod v2.0"
+echo "  MTK Extreme Bandwidth Mod"
 echo "  Control Panel & Profile Switcher"
 echo "  by Elvan · WebUI & Tuner by hoc"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "  ✓ Web Control Panel launched at:"
-echo "    http://localhost:$PORT"
+echo "    http://127.0.0.1:$PORT"
 echo ""
 echo "  Active Profile : $CURRENT"
 echo "  Server Status  : RUNNING (Port $PORT)"
